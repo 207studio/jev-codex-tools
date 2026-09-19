@@ -13,6 +13,7 @@ import {decideTool} from './tool-decisions.mjs';
 import {externalEntry} from './external.mjs';
 import {choose} from './choice.mjs';
 import {contextWindow,minimumOutputBytes,toolOutput} from './context-window.mjs';
+import {selectProgress} from './progress-compaction.mjs';
 
 const exec=promisify(execFile);
 const data=path.join(stateHome, 'hooks');
@@ -20,7 +21,7 @@ const hash=x=>createHash('sha256').update(x).digest('hex');
 const secret=s=>[process.env.TYPESAFE_API_KEY,process.env.JEV_API_KEY].some(key=>key&&key.length>=8&&s.includes(key)) || /\b(?:Bearer\s+\S+|sk-[\w-]{12,}|gh[pousr]_[\w]{12,}|AKIA[A-Z0-9]{12,})|(?:api[_-]?key|password|authorization|secret|token)["']?\s*[=:]\s*[^\s,;}]+|-----BEGIN.*PRIVATE KEY/i.test(s);
 const emit=x=>{
   if(x.hookSpecificOutput?.hookEventName==='SubagentStart' && enabled('visual_enforcement'))
-    x.hookSpecificOutput.additionalContext+=' 시각 확인·구현의 선택형 판단은 jev-visual --spec을 선행한다. 픽셀은 미확인으로 남기고 실제 시각 검증을 생략하지 않는다. 후보 토큰 반영은 --apply --execute와 현재 파일 해시를 요구한다.';
+    x.hookSpecificOutput.additionalContext+=' 시각 확인·구현의 선택형 판단은 jev-visual --spec을 선행하되 GPT image_gen 이미지 생성은 Jev 시각 판단에서 제외한다. 픽셀은 미확인으로 남기고 실제 시각 검증을 생략하지 않는다. 후보 토큰 반영은 --apply --execute와 현재 파일 해시를 요구한다.';
   process.stdout.write(JSON.stringify(x)+'\n');
 };
 // Absolute system binaries avoid shell functions, Git hooks and external diff drivers.
@@ -59,11 +60,32 @@ async function risk(event) {
 }
 
 async function compact(event) {
-  if(!enabled('instant_compaction') || !enabled('prune') || !process.env.JEV_PRUNE_ENTRY) return {};
-  const command=event.tool_input?.command;
+  if(!enabled('instant_compaction')) return {};
+  const command=event.tool_input?.command ?? event.tool_input?.cmd;
   if(typeof command!=='string' || /jevprune|jev-judge|jev-aside|\/integration\//.test(command)) return {};
   const {raw,exit,format}=toolOutput(event);
   if(format==='native-text'&&event.tool_name!=='Bash')return {};
+  if(enabled('progress_compaction')) {
+    const window=await contextWindow(event);
+    const selected=Buffer.byteLength(command)>1000 || secret(command)
+      ? {status:'retained',reason:'command_withheld'}
+      : await selectProgress({raw,exit},{minimumBytes:minimumOutputBytes(window)});
+    const metadata={time:Date.now(),session_id:event.session_id,turn_id:event.turn_id,tool_use_id:event.tool_use_id,
+      mode:'builtin-progress',status:selected.status,reason:selected.reason,input_bytes:selected.input_bytes??null,
+      decision_bytes:selected.decision_bytes??0,choice:selected.choice??'UNKNOWN',confidence:selected.confidence??0,
+      context:window,format,exit_code:exit};
+    await appendFile(path.join(data,'compaction-status.jsonl'),JSON.stringify(metadata)+'\n',{mode:0o600});
+    if(selected.decision_bytes>0)await appendFile(path.join(data,'compaction-decisions.jsonl'),JSON.stringify({...metadata,jev_requested:true})+'\n',{mode:0o600});
+    if(selected.status!=='selected')return {};
+    const original=path.join(data,`output-${randomUUID()}.log`);
+    const feedback=JSON.stringify({command,exit_code:exit,protected_lines:selected.protected_lines,original_log:original,
+      output:'Jev selected omission of repetitive progress only. The original log and all non-progress lines are preserved; null exit status remains unknown.'});
+    if(Buffer.byteLength(feedback)>4000 || Buffer.byteLength(feedback)>=Buffer.byteLength(raw))return {};
+    await writeFile(original,raw,{mode:0o600,flag:'wx'});
+    await appendFile(path.join(data,'compaction.jsonl'),JSON.stringify({...metadata,provider:'jev',output_bytes:Buffer.byteLength(feedback),original_log:original})+'\n',{mode:0o600});
+    return {continue:false,stopReason:feedback};
+  }
+  if(!enabled('prune') || !process.env.JEV_PRUNE_ENTRY) return {};
   if(!raw||Buffer.byteLength(raw)<1000)return {};
   const window=await contextWindow(event);
   // Unknown response layouts, failures and essential evidence pass through untouched.

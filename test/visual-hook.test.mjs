@@ -11,10 +11,11 @@ function fixture(t) {
   const root=mkdtempSync(path.join(tmpdir(),'jev-visual-hook-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
   const config=path.join(root,'features.json'),count=path.join(root,'calls');
   writeFileSync(config,JSON.stringify({visual_enforcement:true,decision_enforcement:true,verification_enforcement:true}));
-  return (tool,input,fail=false)=>{
+  return (tool,input,fail=false,failEffects=false)=>{
     const program=`import {writeFileSync} from 'node:fs';let n=0;
       globalThis.fetch=async(_url,options)=>{n++;const body=JSON.parse(options.body);const q=body.questions.decision;const keys=Object.keys(q.criteria);const visual=!keys.includes('reversible');
         if(visual && ${JSON.stringify(fail)}) throw Error('synthetic unavailable');
+        if(!visual && ${JSON.stringify(failEffects)}) throw Error('synthetic effects unavailable');
         const choice=visual?keys.find(k=>k!=='UNKNOWN'):'reversible';
         return {ok:true,json:async()=>({model:'jev-latest',answers:{decision:{type:'choice',choice,confidence:1,probabilities:Object.fromEntries(keys.map(k=>[k,k===choice?1:0]))}}})};};
       await import(${JSON.stringify(handler)});writeFileSync(${JSON.stringify(count)},String(n));`;
@@ -28,9 +29,18 @@ test('visual tools require separate routing and effect judgments with private ca
   const first=call('view_image',args);assert.deepEqual(first.output,{});assert.equal(first.calls,2);
   const repeat=call('view_image',args);assert.deepEqual(repeat.output,{});assert.equal(repeat.calls,0);
 });
-test('UI edits and asset generation cannot bypass unavailable visual judgment',t=>{
+test('UI edits and other asset generators cannot bypass unavailable visual judgment',t=>{
   const call=fixture(t);
-  for (const [tool,input] of [['apply_patch',{command:'*** Begin Patch\n*** Update File: App.swift\n@@\n-old\n+new\n*** End Patch'}],['image_gen__imagegen',{prompt:'synthetic asset'}]]) {
+  for (const [tool,input] of [['apply_patch',{command:'*** Begin Patch\n*** Update File: App.swift\n@@\n-old\n+new\n*** End Patch'}],['mcp__other__generate_image',{prompt:'synthetic asset'}]]) {
     const result=call(tool,input,true);assert.equal(result.output.hookSpecificOutput.permissionDecision,'deny');assert.equal(result.calls,2);
   }
+});
+test('GPT image generation remains subject to effect judgment without visual routing',t=>{
+  const call=fixture(t);
+  for(const tool of ['image_gen__imagegen','image_gen.imagegen']){
+    const result=call(tool,{prompt:'synthetic asset'},true);
+    assert.deepEqual(result.output,{});assert.equal(result.calls,1);
+  }
+  const failed=call('image_gen__imagegen',{prompt:'synthetic effects failure'},true,true);
+  assert.equal(failed.output.hookSpecificOutput.permissionDecision,'deny');assert.equal(failed.calls,1);
 });

@@ -6,5 +6,5 @@ Use the decision hook for supported tool calls and registered Jev adapters for f
 Retain UNKNOWN and low-confidence evidence; stop UI actions when state or authorization is unclear.
 Never commit credentials, conversations, runtime state, generated binaries, or personal configuration.
 Document actual validation and limitations; do not infer token savings or platform compatibility.
-For visual finite choices use jev-visual; preserve pixel review as unperformed until a supported tool actually inspects pixels.
+For visual finite choices use jev-visual, except GPT image_gen image generation; preserve pixel review as unperformed until a supported tool actually inspects pixels.
 Before verification, use jev-verify plan and run; with shell enforcement enabled use its registered absolute path, never bypass a denial, and keep Jev's judgment separate from actual exit codes.

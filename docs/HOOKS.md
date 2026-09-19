@@ -7,7 +7,7 @@ All original native-hook handlers developed for this toolkit are published in [c
 | `SubagentStart` / 하위 에이전트 판단 지침 | `codex-hooks.mjs`; `subagent_contract`, optional `visual_enforcement` | Injects the bounded inherited contract. It cannot control a child outside hook coverage. |
 | `PreToolUse` / 실행·검증·수집·시각 판단 | `verification-enforcement.mjs`, `collection-enforcement.mjs`, `tool-decisions.mjs`, `visual-enforcement.mjs`; corresponding enforcement flags | Guards recognized command/tool forms before execution. Classification is not host authorization. |
 | `PermissionRequest` / 기존 승인 정책 유지 | `codex-hooks.mjs`; `decision_enforcement` or legacy `tool_gate` | With decision enforcement, keeps native policy. Legacy auto-allow is limited to high-confidence read-only classification plus the static `/bin/pwd` or `/usr/bin/true` allowlist. |
-| `PostToolUse` / 출력 선별·실행 기록 | `codex-hooks.mjs`, `visual-enforcement.mjs`, `context-window.mjs`; `tool_gate`, `visual_enforcement`, `instant_compaction`, `prune`, `early_compaction` | Records observed execution separately. Eligible redundant output may be selected through an explicitly installed external prune bridge. |
+| `PostToolUse` / 출력 선별·실행 기록 | `codex-hooks.mjs`, `progress-compaction.mjs`, `visual-enforcement.mjs`, `context-window.mjs`; `tool_gate`, `visual_enforcement`, `instant_compaction`, `progress_compaction`, `prune`, `early_compaction` | Records execution separately. One bounded Jev choice can select repetitive numeric progress for deterministic removal, or the legacy external bridge can be selected. |
 | `PreCompact` / 기본 압축 시작 기록 | `codex-hooks.mjs`; `compaction_audit` | Records native compaction and explicitly marks `jev_used: false`. |
 | `PostCompact` / 기본 압축 완료 기록 | Same | Records completion; does not rewrite history or replace native compaction. |
 
@@ -25,7 +25,17 @@ All package flags default to off. A package install does not modify user instruc
 
 When `early_compaction` is enabled, the current adapter reads bounded local token telemetry and uses `early_compaction_start_percent`, default **85**. At or above that measured threshold it lowers the eligible output-size threshold from 8000 bytes to 2000 bytes by default. It does **not** trigger native compaction, shrink the model's configured window, or guarantee that Jev runs before every native compact event. Missing or stale-after-compaction telemetry remains unknown.
 
-Output selection additionally requires `instant_compaction`, `prune`, and an explicitly configured `JEV_PRUNE_ENTRY`. Failed commands, protected errors/constraints, recognized secrets, unsupported layouts, and insufficiently confident decisions pass through. Original output is retained privately. The external bridge is separately installed and licensed.
+Output selection requires `instant_compaction`. Enable `progress_compaction` for the built-in path: Jev sees only progress counts, at most four numeric progress samples, byte counts and the known/unknown exit code. One PRUNE decision with confidence at least 0.9 allows code to omit only complete numeric progress lines. Every other line stays exact and ordered; errors, constraints, recognized secrets, failed commands, uncertain decisions and insufficient savings pass through. Original output is retained privately before feedback is returned. No external prune install or second model call is needed. Disable `progress_compaction` to restore the legacy path, which separately requires `prune` and an explicit `JEV_PRUNE_ENTRY`; disable `instant_compaction` to stop both.
+
+The built-in path writes private metadata to `compaction-status.jsonl`, including why a candidate was retained, and writes selection decisions separately. It never logs the output body there. It preserves the 85% threshold and the existing 8 KB/2 KB eligibility limits. Native conversation compaction remains unchanged.
+
+The handler returns `continue: false` with bounded feedback only after successful selection. The [official hook contract](https://learn.chatgpt.com/docs/hooks#posttooluse) says this changes the model-visible result without rejecting a nested code-mode promise. Hosted tools and specialized paths can bypass local hooks, and this is not a promise to intercept all output or remove original transcripts.
+
+## Better evidence for bounded commands
+
+Effect classification now parses up to eight literal shell commands, including the required `2>&1 | head -c 4000` form. Jev receives program/subcommand/flag names and chain operators, never full commands, argument values, script bodies or executable paths. Unsupported syntax and interpreters remain withheld. New metadata invalidates old classification cache entries; UNKNOWN and native authorization are unchanged.
+
+GPT image generation (`image_gen__imagegen` or `image_gen.imagegen`, exact tool names) is excluded from the visual routing gate. It still follows ordinary tool-effect classification and host policy. Browser/macOS/iOS observation and interaction remain under the visual gate; the exemption is not a claim of pixel verification.
 
 ## Other published components
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Retain bounded shell pipeline metadata for Jev effect classification without sending argument values or changing native approvals.
+- Add opt-in one-decision numeric progress selection with exact protected lines, private originals, conservative fallback, and retention-reason metadata; keep the 85% telemetry threshold.
+- Exempt exact GPT image generation tools from visual routing consultation while retaining other visual gates and ordinary effect/host policy.
+
 - Add the opt-in `jev-conflicts` index: explicit source/symbol groups, exact evidence locations, finite contradiction/compatible/unknown labels, bounded request budgets, hash-bound decision reuse and source freshness checks.
 - Preserve unresolved candidates and collection issues, keep indexes private, and provide <=4 KB result pages without automatic code edits or whole-repository scans.
 
