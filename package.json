@@ -1,0 +1,45 @@
+{
+  "name": "@207studio/jev-codex-tools",
+  "version": "0.1.0",
+  "description": "Opt-in Jev decision adapters and bounded local session readers for Codex.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/207studio/jev-codex-tools.git"
+  },
+  "homepage": "https://github.com/207studio/jev-codex-tools#readme",
+  "bugs": {
+    "url": "https://github.com/207studio/jev-codex-tools/issues"
+  },
+  "bin": {
+    "jev-judge": "bin/jev-judge.mjs",
+    "jev-features": "bin/jev-features.mjs",
+    "jev-session-read": "bin/jev-session-read.mjs",
+    "jev-aside": "bin/jev-aside.mjs",
+    "jev-macos": "bin/jev-macos.mjs",
+    "jev-ios": "bin/jev-ios.mjs",
+    "jev-codex": "bin/jev-codex.mjs",
+    "jevprune": "bin/jevprune.mjs",
+    "jev-gateway-codex": "bin/jev-gateway-codex.mjs",
+    "jev-codex-hooks": "bin/jev-codex-hooks.mjs"
+  },
+  "scripts": {
+    "build:macos": "node scripts/build-macos.mjs"
+  },
+  "files": [
+    "bin/",
+    "integration/*.mjs",
+    "integration/macos-ax.swift",
+    "scripts/build-macos.mjs",
+    "jev-judge.mjs",
+    "README.md",
+    "LICENSE",
+    "docs/",
+    "skills/",
+    "examples/"
+  ]
+}
