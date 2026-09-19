@@ -68,6 +68,8 @@ For scoped cross-file consistency review, use [the contradiction index](docs/CON
 
 For existing TypeSafe skills, optional MCP access and Ultrafast-style operation/target selection on Aside, see [Jev integrations](docs/JEV_INTEGRATIONS.md). The `browser_fanout` feature is opt-in and reuses the current Aside browser.
 
+For five or more bounded semantic judgments with record text kept outside agent context, see [Jev Mode for Codex](docs/JEV_MODE.md). The adapted skill reuses an existing shared CLI; its hook example is inactive and requires user approval.
+
 To distinguish provider failures from missing evidence or missing options, see [UNKNOWN diagnostics](docs/UNKNOWN_DIAGNOSTICS.md). The optional follow-up preserves the original verdict and proposes only exact source labels; it cannot create execution permission.
 
 1. Code identifies a bounded input and allowed choices.

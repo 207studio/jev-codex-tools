@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a manually installed Codex Jev Mode skill and inactive hook example for an existing shared CLI; document the pip metadata trap, zero raw-item output policy, measured example batch and limits of token/child-coverage metrics.
+
 - Preserve shared Jev failure causes, explicit uncertain confidence and low-confidence observations through verification caches; add optional bounded cause/candidate diagnosis and judge `--details` without changing the original verdict or host permissions.
 
 - Add an opt-in Aside operation/target fan-out policy with bounded inputs, conditional WAIT, confidence fallback and existing freshness checks; retain the single-target policy when disabled.
