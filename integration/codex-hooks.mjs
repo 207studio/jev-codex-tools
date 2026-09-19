@@ -116,7 +116,7 @@ try {
     fileURLToPath(new URL('../bin/jev-verify.mjs',import.meta.url)),
     ...(typeof configuredWrapper==='string' && path.isAbsolute(configuredWrapper) ? [configuredWrapper] : [])
   ],trustedDecisionExecutables:[
-    ...['jev-judge','jev-session-read','jev-aside','jev-macos','jev-ios','jev-collect','jev-visual'].map(name=>fileURLToPath(new URL(`../bin/${name}.mjs`,import.meta.url))),
+    ...['jev-judge','jev-session-read','jev-aside','jev-macos','jev-ios','jev-collect','jev-visual','jev-conflicts'].map(name=>fileURLToPath(new URL(`../bin/${name}.mjs`,import.meta.url))),
     ...(Array.isArray(settings().decision_executables) ? settings().decision_executables : [])
   ]};
   const blocked=verificationEnforcement(event,shellPolicy);
