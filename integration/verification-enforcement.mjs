@@ -56,6 +56,7 @@ function lex(source) {
   if (quote) invalid();
   flush(); return tokens;
 }
+export {parse as parseShellCommand};
 function parse(source) {
   const commands = [], links = []; let words = [], redirects = 0;
   const finish = () => {

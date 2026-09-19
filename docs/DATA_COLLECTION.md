@@ -1,5 +1,7 @@
 # Bounded data collection with Jev
 
+Version 0.1.5 adds CSV, wrapped JSON, protected evidence, bounded result reading and an opt-in maximum profile plus shell enforcement. See [maximum collection](MAXIMUM_COLLECTION.md) for the extended contract; the limits below describe the original bounded profile.
+
 `jev-collect` adds code-first gathering and deduplication, followed by finite Jev selection. It is an experimental implementation of the official [pre-parsed value extraction](https://docs.typesafe.ai/cookbooks/pre_parsed_value_extraction_cookbook) pattern, using the existing [HTTP API](https://docs.typesafe.ai/api) adapter. No new SDK, search provider or crawler dependency is installed. It does not intercept every Codex or browser read.
 
 ## Use

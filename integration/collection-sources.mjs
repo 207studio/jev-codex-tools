@@ -29,7 +29,8 @@ export function publicURL(input) {
   return url;
 }
 
-export async function fetchPublic(input, {resolveDNS=lookup,requestHTTPS=get}={}) {
+export async function fetchPublic(input, {resolveDNS=lookup,requestHTTPS=get,maxBytes=MAX_SOURCE_BYTES}={}) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576) throw Error('invalid_source_limit');
   const url = publicURL(input);
   let timer;
   const addresses = await Promise.race([
@@ -44,15 +45,15 @@ export async function fetchPublic(input, {resolveDNS=lookup,requestHTTPS=get}={}
       callback(null, options?.all ? [{address,family:4}] : address, 4);
     }},response => {
       const type = String(response.headers['content-type'] || '').split(';')[0].trim();
-      if (response.statusCode !== 200 || !['text/plain','text/markdown','application/json','application/x-ndjson','application/jsonl'].includes(type) ||
+      if (response.statusCode !== 200 || !['text/plain','text/markdown','text/csv','application/csv','application/json','application/x-ndjson','application/jsonl'].includes(type) ||
           (response.headers['content-encoding'] && response.headers['content-encoding'] !== 'identity') ||
-          Number(response.headers['content-length'] || 0) > MAX_SOURCE_BYTES) {
+          Number(response.headers['content-length'] || 0) > maxBytes) {
         response.destroy(); reject(Error('unsupported_http_response')); return;
       }
       const chunks=[]; let size=0;
       response.on('data',chunk => {
         size+=chunk.length;
-        if (size>MAX_SOURCE_BYTES) {response.destroy();reject(Error('source_too_large'));}
+        if (size>maxBytes) {response.destroy();reject(Error('source_too_large'));}
         else chunks.push(chunk);
       });
       response.on('error',()=>reject(Error('source_read_failed')));
@@ -62,9 +63,10 @@ export async function fetchPublic(input, {resolveDNS=lookup,requestHTTPS=get}={}
   });
 }
 
-export async function readSource(source, {fetcher=fetchPublic}={}) {
-  if (!source || !['text','jsonl','json'].includes(source.format) ||
-      Object.keys(source).some(key=>!['file','url','format'].includes(key)) ||
+export async function readSource(source, {fetcher=fetchPublic,maxBytes=MAX_SOURCE_BYTES}={}) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576) throw Error('invalid_source_limit');
+  if (!source || !['text','jsonl','json','csv'].includes(source.format) ||
+      Object.keys(source).some(key=>!['file','url','format','records_path','text_fields'].includes(key)) ||
       (typeof source.file === 'string') === (typeof source.url === 'string')) throw Error('invalid_source');
   let bytes;
   if (source.file) {
@@ -72,22 +74,22 @@ export async function readSource(source, {fetcher=fetchPublic}={}) {
     const handle=await open(source.file,'r');
     try {
       const info=await handle.stat();
-      if (!info.isFile() || info.size>MAX_SOURCE_BYTES) throw Error('source_too_large_or_not_regular');
-      const buffer=Buffer.alloc(MAX_SOURCE_BYTES+1);
+      if (!info.isFile() || info.size>maxBytes) throw Error('source_too_large_or_not_regular');
+      const buffer=Buffer.alloc(maxBytes+1);
       let size=0;
       while (size<buffer.length) {
         const {bytesRead}=await handle.read(buffer,size,buffer.length-size,size);
         if (!bytesRead) break;
         size+=bytesRead;
       }
-      if (size>MAX_SOURCE_BYTES) throw Error('source_too_large');
+      if (size>maxBytes) throw Error('source_too_large');
       bytes=buffer.subarray(0,size);
     } finally {await handle.close();}
   } else {
     publicURL(source.url);
-    bytes=await fetcher(source.url);
+    bytes=await fetcher(source.url,{maxBytes});
   }
-  if (!Buffer.isBuffer(bytes) || bytes.length>MAX_SOURCE_BYTES) throw Error('source_too_large');
+  if (!Buffer.isBuffer(bytes) || bytes.length>maxBytes) throw Error('source_too_large');
   const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
   if (text.includes('\0')) throw Error('binary_source');
   return {text,bytes,sha256:digest(bytes)};

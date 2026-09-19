@@ -58,7 +58,7 @@ test('cache corruption, schema/model change and nonconfident cached values cause
   const decide=async(_state,questions)=>{calls++;return all(questions);};
   await selectRecords(input,{...options,decide});const filename=path.join(options.cacheDir,(await readdir(options.cacheDir))[0]);
   const valid=JSON.parse(await readFile(filename,'utf8'));
-  assert.equal(valid.schema,'data-collection-v2');
+  assert.equal(valid.schema,'data-collection-v3');
   for(const malformed of ['not json',JSON.stringify({...valid,schema:'data-collection-v1'}),JSON.stringify({...valid,model:'other'}),JSON.stringify({...valid,answers:[{...valid.answers[0],confidence:0.3}]}),JSON.stringify({...valid,answers:[{...valid.answers[0],choice:'UNKNOWN'}]})]){
     await writeFile(filename,malformed);const result=await selectRecords(input,{...options,decide});assert.equal(result.stats.cache_hits,0);
   }

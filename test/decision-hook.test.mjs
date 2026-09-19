@@ -8,11 +8,11 @@ import {fileURLToPath} from 'node:url';
 
 const handler=fileURLToPath(new URL('../integration/codex-hooks.mjs',import.meta.url));
 const wrapper=fileURLToPath(new URL('../bin/jev-verify.mjs',import.meta.url));
-function fixture(t) {
+function fixture(t,extra={}) {
   const root=mkdtempSync(path.join(tmpdir(),'jev-decision-hook-'));
   t.after(()=>rmSync(root,{recursive:true,force:true}));
   const config=path.join(root,'features.json'), counter=path.join(root,'calls');
-  writeFileSync(config,JSON.stringify({verification_enforcement:true,decision_enforcement:true,tool_gate:true}));
+  writeFileSync(config,JSON.stringify({verification_enforcement:true,decision_enforcement:true,tool_gate:true,...extra}));
   return (tool,input,mode='valid')=>{
     const program=`import {writeFileSync} from 'node:fs';
       let calls=0;
@@ -20,7 +20,7 @@ function fixture(t) {
       await import(${JSON.stringify(handler)});
       writeFileSync(${JSON.stringify(counter)},String(calls));`;
     const result=spawnSync(process.execPath,['--input-type=module','--eval',program],{
-      env:{...process.env,JEV_TOOLS_HOME:root,JEV_FEATURES_FILE:config,JEV_API_KEY:'synthetic',TYPESAFE_API_KEY:'synthetic',JEV_DECISION_ENFORCEMENT_ENABLED:'1',JEV_VERIFICATION_ENFORCEMENT_ENABLED:'1',JEV_TOOL_GATE_ENABLED:'1'},
+      env:{...process.env,JEV_TOOLS_HOME:root,JEV_FEATURES_FILE:config,JEV_API_KEY:'synthetic',TYPESAFE_API_KEY:'synthetic',JEV_DECISION_ENFORCEMENT_ENABLED:'1',JEV_VERIFICATION_ENFORCEMENT_ENABLED:'1',JEV_TOOL_GATE_ENABLED:'1',JEV_COLLECTION_ENFORCEMENT_ENABLED:extra.collection_enforcement?'1':'0'},
       input:JSON.stringify({hook_event_name:'PreToolUse',session_id:'synthetic',turn_id:mode,tool_use_id:tool,tool_name:tool,tool_input:input}),
       encoding:'utf8',timeout:5000,maxBuffer:4096
     });
@@ -51,4 +51,12 @@ test('uncertainty keeps native policy and existing direct-test denial remains st
   const blocked=call('Bash',{command:'npm test'});
   assert.equal(blocked.output.hookSpecificOutput.permissionDecision,'deny');
   assert.equal(blocked.calls,0);
+});
+
+test('maximum collection guard blocks raw bulk output before Jev and preserves bounded reads',t=>{
+  const call=fixture(t,{collection_enforcement:true});
+  const denied=call('Bash',{command:'cat dataset.json'});
+  assert.equal(denied.output.hookSpecificOutput.permissionDecision,'deny');assert.equal(denied.calls,0);
+  const allowed=call('Bash',{command:'cat dataset.json 2>&1 | head -c 4000'});
+  assert.deepEqual(allowed.output,{});assert.equal(allowed.calls,1);
 });

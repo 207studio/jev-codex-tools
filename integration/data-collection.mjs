@@ -4,7 +4,7 @@ import path from 'node:path';
 import {chooseMany} from './choice.mjs';
 import {stateHome} from './paths.mjs';
 
-const SCHEMA='data-collection-v2',MODEL='jev-latest',TTL=24*60*60*1000;
+const SCHEMA='data-collection-v3',MODEL='jev-latest',TTL=24*60*60*1000;
 const MAX_RECORDS=96,MAX_TEXT_BYTES=1500,MAX_STATE_BYTES=20*1024,MAX_CANDIDATES=24;
 const bytes=value=>Buffer.byteLength(value,'utf8');
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -22,6 +22,8 @@ function containsSecret(text) {
   if([process.env.TYPESAFE_API_KEY,process.env.JEV_API_KEY].some(key=>typeof key==='string'&&key.length>=8&&text.includes(key)))return true;
   return /-----BEGIN[^\r\n]*(?:PRIVATE KEY|PGP PRIVATE|SECRET)[^\r\n]*-----|\b(?:Authorization|Proxy-Authorization)\s*[:=]|\bBearer\s+\S+|\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9_]{12,}|AKIA[A-Z0-9]{16})\b|\b[a-z][a-z0-9+.-]*:\/\/[^\s/?#]*@|\b[A-Z0-9_-]*(?:API[_-]?KEY|SECRET|TOKEN|PASSWORD|PASSWD|CREDENTIAL|ACCESS[_-]?KEY)[A-Z0-9_-]*["']?\s*[:=]/i.test(text);
 }
+
+export const sourceHasSecrets = text => containsSecret(text) || secretBlock.test(text);
 
 function validate(records,question,mode,kind,now) {
   if(!Array.isArray(records)||records.length>MAX_RECORDS)throw new TypeError('INVALID_RECORD_COUNT');
@@ -149,8 +151,9 @@ export async function selectRecords(records,{question,mode='filter',kind='url',a
   // A source may have been split through a key block; do not send adjacent body chunks.
   const blockedSources=new Set(records.filter(record=>secretBlock.test(record.text)).map(record=>record.source));
   for(const item of items) {
-    if(containsSecret(item.record.text)||item.originals.some(record=>blockedSources.has(record.source))) {item.answer={decision:'UNKNOWN',reason:'secret_withheld'};stats.withheld++;}
+    if(containsSecret(item.record.text)||item.originals.some(record=>record.secret_source===true||blockedSources.has(record.source))) {item.answer={decision:'UNKNOWN',reason:'secret_withheld'};stats.withheld++;}
     else if(!active)item.answer={decision:'UNKNOWN',reason:'inactive'};
+    else if(item.originals.some(record=>record.protected===true))item.answer={decision:'UNKNOWN',reason:'protected_evidence'};
     else if(mode==='extract') {
       item.candidates=candidates(item.record.text,kind);
       if(!item.candidates){item.answer={decision:'UNKNOWN',reason:'candidate_limit'};stats.candidate_limit++;}

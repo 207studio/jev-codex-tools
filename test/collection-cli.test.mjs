@@ -23,7 +23,27 @@ test('CLI disable, missing API fallback, artifacts and overwrite protection',asy
     const records=JSON.parse(await readFile(path.join(output,'records.json'),'utf8'));
     assert.ok(records.every(row=>row.decision==='UNKNOWN'));assert.equal(records.length,2);
     assert.equal((await stat(path.join(output,'records.json'))).mode & 0o777,0o600);
+    const read=spawnSync(process.execPath,[cli,'--read',path.join(output,'manifest.json')],{env,encoding:'utf8'});
+    assert.equal(read.status,0,read.stderr);assert.equal(JSON.parse(read.stdout).items.length,2);
     r=run();assert.equal(r.status,2);assert.equal(JSON.parse(r.stdout).reason,'output_already_exists');
     await mkdir(path.join(root,'present'));
+  } finally {await rm(root,{recursive:true,force:true});}
+});
+
+test('maximum collection pages projected sources and preserves global duplicate provenance',async()=>{
+  const root=await mkdtemp(path.join(tmpdir(),'jev-maximum-cli-'));
+  try {
+    const input=path.join(root,'rows.json'),spec=path.join(root,'spec.json'),out=path.join(root,'out');
+    const rows=Array.from({length:101},(_,i)=>({message:`Required evidence must be retained ${i}`,other:'unused'}));
+    rows.push({...rows[0]});
+    await writeFile(input,JSON.stringify({data:{items:rows}}));
+    await writeFile(spec,JSON.stringify({profile:'maximum',question:'Find evidence',mode:'filter',sources:[{file:input,format:'json',records_path:['data','items'],text_fields:['message']}],output_dir:out}));
+    const result=spawnSync(process.execPath,[cli,'--spec',spec],{env:{...process.env,JEV_DATA_COLLECTION_ENABLED:'1',JEV_TOOLS_HOME:root,JEV_API_KEY:'',TYPESAFE_API_KEY:''},encoding:'utf8'});
+    assert.equal(result.status,0,result.stderr+result.stdout);
+    const data=JSON.parse(result.stdout);assert.equal(data.profile,'maximum');
+    assert.equal(data.stats.pages,2);assert.equal(data.stats.input_records,102);assert.equal(data.stats.exact_duplicates,1);assert.equal(data.stats.jev_requests,0);
+    const records=JSON.parse(await readFile(path.join(out,'records.json'),'utf8'));
+    assert.equal(records.length,101);assert.equal(records[0].aliases.length,1);assert.equal(records[0].aliases[0].record_index,101);
+    assert.equal(await readFile(path.join(out,'s1.source'),'utf8'),await readFile(input,'utf8'));
   } finally {await rm(root,{recursive:true,force:true});}
 });
