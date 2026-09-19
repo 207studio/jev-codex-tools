@@ -1,0 +1,17 @@
+# Replace these absolute paths with your reviewed, separately installed files.
+# Supply TYPESAFE_API_KEY or JEV_API_KEY in the host environment; no key goes here.
+[mcp_servers.jev_decisions]
+command = "/absolute/path/to/node"
+args = ["/absolute/path/to/jev-codex-tools/bin/jev-mcp.mjs", "--entry", "/absolute/path/to/pinned-jev-mcp/dist/index.js"]
+env_vars = ["TYPESAFE_API_KEY", "JEV_API_KEY"]
+enabled = true
+required = false
+enabled_tools = ["jev_evaluate"]
+startup_timeout_sec = 15
+tool_timeout_sec = 35
+
+[mcp_servers.jev_decisions.tools.jev_evaluate]
+output_token_limit = 1000
+
+# Disable with enabled = false above, or JEV_MCP_ENABLED=0 in server env.
+# Keep the existing Codex approval settings; this config grants no execution right.

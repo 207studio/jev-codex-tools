@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Preserve shared Jev failure causes, explicit uncertain confidence and low-confidence observations through verification caches; add optional bounded cause/candidate diagnosis and judge `--details` without changing the original verdict or host permissions.
+
+- Add an opt-in Aside operation/target fan-out policy with bounded inputs, conditional WAIT, confidence fallback and existing freshness checks; retain the single-target policy when disabled.
+- Add an optional launcher and Codex tool allowlist example for a separately reviewed Jev MCP server; preserve provider isolation, existing verification tools and host approvals.
+
 - Retain bounded shell pipeline metadata for Jev effect classification without sending argument values or changing native approvals.
 - Add opt-in one-decision numeric progress selection with exact protected lines, private originals, conservative fallback, and retention-reason metadata; keep the 85% telemetry threshold.
 - Exempt exact GPT image generation tools from visual routing consultation while retaining other visual gates and ordinary effect/host policy.
