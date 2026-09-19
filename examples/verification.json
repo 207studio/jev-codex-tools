@@ -1,0 +1,20 @@
+{
+  "task": "verification-policy-change",
+  "goal": "Check mandatory, uncertainty, and execution-status invariants of the verification policy.",
+  "cwd": ".",
+  "files": [
+    "integration/verification.mjs",
+    "integration/verification-cli.mjs",
+    "integration/choice.mjs",
+    "integration/features.mjs",
+    "integration/paths.mjs",
+    "test/verification.test.mjs",
+    "package.json"
+  ],
+  "scope_complete": true,
+  "mandatory": true,
+  "risk": "normal",
+  "new_failure": false,
+  "argv": ["node", "--test", "test/verification.test.mjs"],
+  "timeout_ms": 30000
+}

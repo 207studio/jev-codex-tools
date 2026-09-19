@@ -9,6 +9,8 @@ jev-features enable judge
 jev-features enable session_reader
 ```
 
+For verification, enable `verification_gate` and `verification_assessment` and use `jev-verify plan/run/assess`. See [the verification policy](VERIFICATION.md). The necessity decision does not authorize a command, and the result judgment does not override its actual exit code.
+
 Supply `JEV_API_KEY` or `TYPESAFE_API_KEY` using your existing secret management. A per-feature `JEV_<FEATURE>_ENABLED=0` override disables that feature for a command. Do not embed real credentials in hook configuration examples or repository files.
 
 ## Optional third-party bridges

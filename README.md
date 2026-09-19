@@ -16,6 +16,7 @@ Independent community project. Not an official OpenAI or TypeSafe product. Jev r
 | `jev-macos` | Select allowed accessibility controls and recheck before AXPress | macOS, locally built helper, and OS accessibility permission required |
 | `jev-ios` | Select allowed Simulator accessibility elements through an existing serve-sim connection | Existing device/server required; no device launched automatically |
 | `jev-features` | Explicit feature enable/disable | All features default off |
+| `jev-verify` | Ask Jev before attempting a check and classify its bounded result | Required checks and real exit codes remain authoritative |
 | Optional adapters | Hook examples and bridges to separately installed routers/output filters | External projects are not bundled or installed automatically |
 
 ## Install from source
@@ -57,6 +58,8 @@ UI adapters select only by default. `--execute` is for actions already authorize
 
 ## Evidence and limitations
 
+For optional repeated verification, use the [verification gate](docs/VERIFICATION.md). It separates RUN/NARROW/SKIP/UNKNOWN from the actual process result and from Jev's assessment of the evidence. The gate cannot skip required or high-risk checks, fabricate a passing test, or create an execution command.
+
 The original local development environment exercised a three-click Aside fixture and synthetic macOS/iOS cases. These are scoped development observations, **not a cross-platform acceptance suite for this extracted package**. Actual native-device behavior and end-to-end Codex token savings remain unverified.
 
 A broad local session audit made seven Jev requests and retained 537 records, dropping none. A repeated stable page used three cached judgments with zero additional Jev requests. That demonstrates the path and cache behavior; it does not demonstrate reduction for that broad query.
@@ -65,7 +68,7 @@ Known limitation: session records over 16 KiB are reported in `issues` and omitt
 
 ## Development
 
-This is an initial public source snapshot. The portable extraction has not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
+The verification gate has 17 passing focused tests, run through its Jev necessity gate. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Upstream projects are credited in [THIRD_PARTY.md](THIRD_PARTY.md). Our integration source is [MIT licensed](LICENSE).
 

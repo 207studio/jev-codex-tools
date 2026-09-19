@@ -10,3 +10,4 @@
 - Optional third-party router bridges do not guarantee compatibility with every upstream version. They require an explicitly configured entry point, and no third-party runtime is bundled.
 - Hook registration, trust, invocation formats, and approval behavior depend on the host. A classifier is not a universal execution gate.
 - No general token-savings percentage, Chrome-versus-Aside speedup, or production reliability level has been measured for this public extraction.
+- Verification gating applies to explicit `jev-verify` calls. Its fingerprint covers only the caller's declared files and inputs; it cannot discover missing dependencies or bypass required checks. A Jev evidence judgment is separate from the real test result.
