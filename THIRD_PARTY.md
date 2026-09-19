@@ -5,6 +5,7 @@ This repository publishes the integration code developed for this toolkit. It do
 - [TypeSafe](https://docs.typesafe.ai/) supplies the hosted Jev decision API. Use is subject to TypeSafe's service terms and pricing. See the [Choice API](https://docs.typesafe.ai/primitives/choice).
 - [Jev Router](https://github.com/gargpratyush/jev-router) is a separate model-tier routing project. An optional bridge requires an explicit external entry path.
 - [Jev Context](https://github.com/zbush/jev-context) is a separate relevance-search project, not bundled here.
+- [Jev Mode](https://github.com/ddfeyes/jev-mode/tree/97615aa5cc14586488c11f6644a5b845827234c6) is a separate MIT batch-decision CLI. Our adapted Codex skill and inactive hook example reuse an existing installation; its source, credentials and shared wrapper are not bundled.
 - [TypeSafe Skills](https://github.com/typesafe-ai/skills) is the official guidance project; review any existing installation before adding another copy.
 - [burnigtm/jev-mcp](https://github.com/burnigtm/jev-mcp/tree/4f4ae11a5e1e9a502cdc432550d878f728851820) is a community MIT MCP server reviewed at that commit. The optional launcher requires its explicit, separately installed entry; its source and dependencies are not redistributed here.
 - [Jev Ultrafast](https://github.com/browser-use/jev-ultrafast/tree/1231850a0bf1a0c0341fe408ef1668dbbfdfac46) is an MIT Chrome/browser-harness example. Its operation/target fan-out architecture informed our original Aside policy; no upstream source or browser driver is copied or bundled.
