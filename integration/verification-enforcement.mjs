@@ -139,18 +139,25 @@ function safeReader(words) {
 
 export function verificationEnforcement(event, options = {}) {
   try {
-    const {active = false, trustedExecutables = []} = options ?? {};
+    const {active = false, trustedExecutables = [], trustedDecisionExecutables = []} = options ?? {};
     if (!active || event?.hook_event_name !== 'PreToolUse' || !TARGETS.has(event?.tool_name)) return null;
     const input = event.tool_input;
     const source = typeof input?.command === 'string' ? input.command : input?.cmd;
     if (typeof source !== 'string' || !source.trim() || Buffer.byteLength(source) > 32768) return deny();
     const trusted = new Set(Array.isArray(trustedExecutables) ? trustedExecutables.filter(item => typeof item === 'string' && path.isAbsolute(item) && path.normalize(item) === item) : []);
+    const decisionRunners = new Set(Array.isArray(trustedDecisionExecutables) ? trustedDecisionExecutables.filter(item => typeof item === 'string' && path.isAbsolute(item) && path.normalize(item) === item) : []);
     const {commands,links} = parse(source); const wrappers = [];
     for (let index = 0; index < commands.length; index++) {
       const words = commands[index].words;
       if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(words[0])) return deny();
       if (trusted.has(words[0])) {
         if (!wrapperCommand(words.slice(1))) return deny();
+        wrappers.push(index); continue;
+      }
+      // These are explicitly registered Jev adapters, never inferred from a filename.
+      // Each adapter owns its argument validation, confidence and execution policy.
+      if (decisionRunners.has(words[0])) {
+        if (words.length > 128 || words.some(word => Buffer.byteLength(word) > 4000)) return deny();
         wrappers.push(index); continue;
       }
       if (words[0] === 'cd') {
@@ -169,4 +176,9 @@ export function verificationEnforcement(event, options = {}) {
     }
     return null;
   } catch { return deny(); }
+}
+
+export function decisionRecovery(event, options = {}) {
+  if (event?.hook_event_name !== 'PreToolUse' || !TARGETS.has(event?.tool_name)) return false;
+  return verificationEnforcement(event,{...options,active:true}) === null;
 }

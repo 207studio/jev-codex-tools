@@ -1,7 +1,7 @@
 # Current limitations
 
 - Jev performs finite choices; it does not capture screens, write arbitrary code, or replace all coding-model reasoning.
-- Codex Desktop and native `read_thread` calls are not automatically intercepted. The explicit commands and optional instructions must be used.
+- The optional decision hook can classify a hook-visible Desktop or native `read_thread` call, but it does not replace its content with a bounded session-reader result. Use the explicit session reader and keep its completeness limits visible.
 - The 85% context setting affects the minimum size for tool-output filtering. It does not schedule or replace full-history native compaction.
 - Session reading defaults to the latest 80 eligible records. Earlier history and remaining output require cursors. A selected page is not the entire conversation.
 - A text record larger than 16 KiB is omitted from the selected view and reported in `issues`. The source remains, but its constraints may be absent from the returned text. This requires improvement before lossless preservation can be claimed.

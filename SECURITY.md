@@ -8,6 +8,8 @@ Verification specs contain caller-supplied argv arrays. Jev may select whether o
 
 The optional verification enforcement hook rejects covered shell calls outside a narrow observation grammar or an exact configured wrapper path. It never grants host permission. It protects against ordinary workflow bypass, not a hostile process, modified wrapper, disabled hook, existing interactive session, or hook-exempt tool. Hook installation and trust must use the host's supported flow; do not manufacture trusted hashes.
 
+Decision enforcement expands pre-tool classification to all hook-visible tool types. A valid or cached classification is not authorization. Invalid or missing responses deny ordinary actions, with narrowly registered recovery paths. The hook transmits bounded masked metadata, not full patches or histories, and keeps uncertainty visible. Register only the intended Jev adapters as `decision_executables`; adding a generic interpreter would weaken the boundary. See [decision enforcement](docs/DECISION_ENFORCEMENT.md).
+
 Feature flags default off. Installation does not register hooks or alter Codex permissions. UI execution requires an explicit execution flag, allowed targets, and the host permissions. This code is not a sandbox or a substitute for the host approval mechanism. A risk-classification result does not authorize an operation.
 
 The package is an experimental initial extraction; it has not undergone a security audit. Native helpers, routers, browser tools, and platform versions may differ from the original local environment.

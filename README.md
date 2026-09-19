@@ -17,6 +17,7 @@ Independent community project. Not an official OpenAI or TypeSafe product. Jev r
 | `jev-ios` | Select allowed Simulator accessibility elements through an existing serve-sim connection | Existing device/server required; no device launched automatically |
 | `jev-features` | Explicit feature enable/disable | All features default off |
 | `jev-verify` | Ask Jev before attempting a check and classify its bounded result | Optional native shell guard enforces the wrapper path; required checks and real exit codes remain authoritative |
+| `jev-codex-hooks` | Require a Jev effect classification for hook-visible shell, edit, agent, and MCP calls | Opt-in; unavailable judgments deny ordinary actions while host policy and narrow recovery remain intact |
 | Optional adapters | Hook examples and bridges to separately installed routers/output filters | External projects are not bundled or installed automatically |
 
 ## Install from source
@@ -68,7 +69,7 @@ Known limitation: session records over 16 KiB are reported in `issues` and omitt
 
 ## Development
 
-The verification gate and shell enforcement have 32 passing focused tests, run through the Jev necessity gate. A live Codex nested shell call was denied before execution, while the same harmless check completed through the registered wrapper. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
+The verification and decision guards have 49 passing focused tests, run through the Jev necessity gate. After an audit metadata correction, only the affected 15 tests were rerun and passed. Live Codex observations include a denied direct shell test, a successful wrapper path, and completed Jev classifications before shell, file-edit, and MCP calls. These classifications do not replace native authorization. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Upstream projects are credited in [THIRD_PARTY.md](THIRD_PARTY.md). Our integration source is [MIT licensed](LICENSE).
 

@@ -6,7 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {stateHome} from './paths.mjs';
 import path from 'node:path';
 import {enabled,settings} from './features.mjs';
-import {verificationEnforcement} from './verification-enforcement.mjs';
+import {verificationEnforcement,decisionRecovery} from './verification-enforcement.mjs';
+import {decideTool} from './tool-decisions.mjs';
 import {externalEntry} from './external.mjs';
 import {choose} from './choice.mjs';
 import {contextWindow,minimumOutputBytes,toolOutput} from './context-window.mjs';
@@ -93,23 +94,34 @@ async function compact(event) {
   return {continue:false,stopReason:feedback};
 }
 
-let hookEvent = null, enforceVerification = false;
+let hookEvent = null, enforceVerification = false, enforceDecisions = false;
 try {
   let input='';
   for await(const chunk of process.stdin){input+=chunk;if(Buffer.byteLength(input)>1048576)throw Error('oversized');}
   const event=JSON.parse(input);
   hookEvent=event;
   enforceVerification=enabled('verification_enforcement');
+  enforceDecisions=enabled('decision_enforcement');
   await mkdir(data,{recursive:true,mode:0o700});
   const name=event.hook_event_name;
   const configuredWrapper=settings().verification_executable;
-  const blocked=verificationEnforcement(event,{active:enforceVerification,trustedExecutables:[
+  const shellPolicy={active:enforceVerification,trustedExecutables:[
     fileURLToPath(new URL('../bin/jev-verify.mjs',import.meta.url)),
     ...(typeof configuredWrapper==='string' && path.isAbsolute(configuredWrapper) ? [configuredWrapper] : [])
-  ]});
+  ],trustedDecisionExecutables:[
+    ...['jev-judge','jev-session-read','jev-aside','jev-macos','jev-ios'].map(name=>fileURLToPath(new URL(`../bin/${name}.mjs`,import.meta.url))),
+    ...(Array.isArray(settings().decision_executables) ? settings().decision_executables : [])
+  ]};
+  const blocked=verificationEnforcement(event,shellPolicy);
   if(blocked) {
     await appendFile(path.join(data,'verification-enforcement.jsonl'),JSON.stringify({time:Date.now(),session_id:event.session_id,tool_use_id:event.tool_use_id,tool_name:event.tool_name,decision:'deny',executed:false})+'\n',{mode:0o600}).catch(()=>{});
     emit(blocked);
+  } else if(name==='PreToolUse' && enforceDecisions) {
+    const decision=await decideTool(event,{active:true,recovery:decisionRecovery(event,shellPolicy)});
+    emit(decision.hookOutput || {});
+  } else if(name==='PermissionRequest' && enforceDecisions) {
+    // PreToolUse already required a Jev receipt. Never promote it to an approval.
+    emit({});
   } else if(['PreCompact','PostCompact'].includes(name)) {
     if(enabled('compaction_audit'))await appendFile(path.join(data,'native-compaction.jsonl'),JSON.stringify({time:Date.now(),session_id:event.session_id,turn_id:event.turn_id,event:name,trigger:event.trigger,provider:'codex-native',jev_used:false})+'\n',{mode:0o600});
     emit({});
@@ -125,7 +137,7 @@ try {
       ? {hookSpecificOutput:{hookEventName:'PermissionRequest',decision:{behavior:'allow'}}} : {});
   } else emit({});
 } catch {
-  emit(enforceVerification && hookEvent?.hook_event_name==='PreToolUse'
+  emit((enforceVerification || enforceDecisions) && hookEvent?.hook_event_name==='PreToolUse'
     ? {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:'Jev 검증 실행 게이트 오류로 실행을 보류했습니다. 원인을 수정한 뒤 다시 시도하세요.'}}
     : {});
 }

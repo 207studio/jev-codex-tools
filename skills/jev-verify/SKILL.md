@@ -13,6 +13,8 @@ Run an authorized command with `jev-verify run --spec FILE --execute`. This repe
 
 When `verification_enforcement` is enabled, use the registered absolute wrapper path. The native shell hook blocks direct checks and unknown scripts; keep work inside the wrapper rather than switching to another interpreter, interactive process, or tool to evade a denial. Exact literal observation commands remain available. This guard does not cover all hosted, browser, or MCP tools.
 
+With `decision_enforcement`, all hook-visible tool calls also obtain a Jev effect classification. A missing response blocks ordinary actions; uncertainty remains UNKNOWN under native policy. Registered Jev judgment/session/UI adapters may be invoked directly by their absolute paths under their own guards. Do not create an extra verification task just to call an already registered Jev adapter. The hook does not replace complex reasoning, code generation, or host safety rules.
+
 The wrapper records the actual exit code and a private full log. Jev separately returns SUPPORTED, CONTRADICTED, or INSUFFICIENT about the goal and bounded evidence. API failure or uncertainty is not a test pass. For an existing log use `jev-verify assess --spec FILE --log LOG --exit-code N`, reporting the original exit code honestly.
 
 After a sufficient relevant check passes, stop unless code/input changes, a new failure, or a required check justifies more work. Never use this decision gate to bypass a host approval, permission boundary, user hold, or required safety validation. Do not forward full logs or repeat cached reasoning to the parent model.

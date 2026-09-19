@@ -2,6 +2,7 @@ Inspect only files relevant to the request; use bounded searches before reading 
 Keep command output within 4000 bytes and retain full test logs outside model context when needed.
 Preserve existing changes and host permission boundaries; do not silently install or enable integrations.
 Use Jev only for finite decisions; keep facts, caching, execution, and safety checks in code.
+Use the decision hook for supported tool calls and registered Jev adapters for finite choices; never bypass a denial or turn UNKNOWN into an invented verdict.
 Retain UNKNOWN and low-confidence evidence; stop UI actions when state or authorization is unclear.
 Never commit credentials, conversations, runtime state, generated binaries, or personal configuration.
 Document actual validation and limitations; do not infer token savings or platform compatibility.

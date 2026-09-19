@@ -1,11 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verificationEnforcement} from '../integration/verification-enforcement.mjs';
+import {verificationEnforcement,decisionRecovery} from '../integration/verification-enforcement.mjs';
 
 const WRAPPER = '/opt/jev/bin/jev-verify';
 const options = {active:true,trustedExecutables:[WRAPPER]};
 const event = command => ({hook_event_name:'PreToolUse',tool_name:'Bash',tool_input:{command}});
 const result = command => verificationEnforcement(event(command),options);
+
+test('registered Jev adapters retain strict single-command boundaries', () => {
+  const adapter='/opt/jev/bin/jev-judge';
+  const configured={...options,trustedDecisionExecutables:[adapter]};
+  const valid=event(`${adapter} --file evidence.txt --question 'Is the required input present?' | head -c 4000`);
+  assert.equal(verificationEnforcement(valid,configured),null);
+  assert.equal(decisionRecovery(valid,configured),true);
+  for(const command of [`${adapter} --file a && npm test`, `env X=1 ${adapter} --file a`, 'jev-judge --file a', '/tmp/jev-judge --file a'])
+    assert.equal(verificationEnforcement(event(command),configured)?.hookSpecificOutput.permissionDecision,'deny');
+});
+
+test('recovery eligibility is limited to observations and registered Jev paths', () => {
+  assert.equal(decisionRecovery(event('rg -n symbol source.mjs'),options),true);
+  assert.equal(decisionRecovery(event(`${WRAPPER} run --spec a.json --execute`),options),true);
+  assert.equal(decisionRecovery(event('python3 script.py'),options),false);
+  assert.equal(decisionRecovery({hook_event_name:'PreToolUse',tool_name:'apply_patch',tool_input:{command:'patch'}},options),false);
+});
 function blocked(command) {
   const answer = result(command);
   assert.equal(answer?.hookSpecificOutput?.hookEventName,'PreToolUse',command);

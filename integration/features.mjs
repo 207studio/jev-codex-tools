@@ -5,7 +5,7 @@ import path from 'node:path';
 import {configHome} from './paths.mjs';
 
 export const featuresPath = path.resolve(process.env.JEV_FEATURES_FILE || path.join(configHome, 'features.json'));
-export const defaults = Object.freeze({judge:false,context:false,prune:false,routing:false,instant_compaction:false,early_compaction:false,compaction_audit:false,tool_gate:false,browser_selector:false,computer_selector:false,ios_selector:false,decision_metrics:false,tool_routing_gateway:false,control_loop:false,subagent_contract:false,session_reader:false,verification_gate:false,verification_assessment:false,verification_enforcement:false});
+export const defaults = Object.freeze({judge:false,context:false,prune:false,routing:false,instant_compaction:false,early_compaction:false,compaction_audit:false,tool_gate:false,browser_selector:false,computer_selector:false,ios_selector:false,decision_metrics:false,tool_routing_gateway:false,control_loop:false,subagent_contract:false,session_reader:false,verification_gate:false,verification_assessment:false,verification_enforcement:false,decision_enforcement:false});
 export function settings() {
   try {
     const value = JSON.parse(readFileSync(featuresPath, 'utf8'));

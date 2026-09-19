@@ -13,6 +13,8 @@ For verification, enable `verification_gate` and `verification_assessment` and u
 
 For strict shell enforcement, also enable `verification_enforcement`, register the native PreToolUse handler through the host's trust flow, and configure `verification_executable` as the installed wrapper's absolute path. Covered shell calls that are neither literal observation commands nor a canonical wrapper invocation are denied before execution. Existing interactive sessions and other tool classes remain outside this guard. Do not change trust hashes by hand.
 
+For all hook-visible tool types, enable `decision_enforcement`. It requires a bounded Jev effect classification before normal execution policy, including file edits and MCP calls. Missing responses deny ordinary actions; narrowly defined recovery remains available. Register the absolute Jev adapter paths in `decision_executables` to use their existing judgment and action loops without wrapping them in another verification command. See [tool decision enforcement](DECISION_ENFORCEMENT.md) for uncertainty, privacy, and coverage boundaries.
+
 Supply `JEV_API_KEY` or `TYPESAFE_API_KEY` using your existing secret management. A per-feature `JEV_<FEATURE>_ENABLED=0` override disables that feature for a command. Do not embed real credentials in hook configuration examples or repository files.
 
 ## Optional third-party bridges

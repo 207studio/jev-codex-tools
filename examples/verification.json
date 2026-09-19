@@ -13,7 +13,10 @@
     "integration/verification-enforcement.mjs",
     "integration/codex-hooks.mjs",
     "test/verification-enforcement.test.mjs",
-    "test/verification-hook.test.mjs"
+    "test/verification-hook.test.mjs",
+    "integration/tool-decisions.mjs",
+    "test/tool-decisions.test.mjs",
+    "test/decision-hook.test.mjs"
   ],
   "scope_complete": true,
   "mandatory": true,
@@ -24,7 +27,9 @@
     "--test",
     "test/verification.test.mjs",
     "test/verification-enforcement.test.mjs",
-    "test/verification-hook.test.mjs"
+    "test/verification-hook.test.mjs",
+    "test/tool-decisions.test.mjs",
+    "test/decision-hook.test.mjs"
   ],
   "timeout_ms": 30000
 }
