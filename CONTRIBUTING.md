@@ -13,4 +13,8 @@ Priorities:
 
 Run `npm test` from a Git checkout with Node.js 24 or later. The suite isolates feature state and removes Jev/TypeSafe environment variables; use synthetic fixtures and injected service responses. Tests are maintained in Git and are not included in the installed npm package. Focused checks are appropriate during development; run the whole suite for changes to shared behavior or release packaging.
 
-Submit a focused pull request with a clear description and validation results. Preserve any third-party notices in code you import. Do not include personal hook configurations, application forms, transcripts, credentials, or generated binaries.
+Make changes on a topic branch and submit a focused pull request targeting `main`; do not push changes directly to `main`. Keep the PR open for review and do not merge or enable auto-merge without explicit maintainer authorization. This workflow applies to code, documentation, configuration and release-preparation changes. Do not rewrite existing published history to manufacture a retrospective PR.
+
+Describe the concrete problem, resulting behavior, relevant validation and remaining limits using the PR template. Documentation-only changes need a focused diff check, not a repeat of the entire runtime suite. Publish release tags from merged commits. These are contributor instructions; they do not configure GitHub branch-protection rules.
+
+Preserve any third-party notices in code you import. Do not include personal hook configurations, application forms, transcripts, credentials, or generated binaries.
