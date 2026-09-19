@@ -82,7 +82,9 @@ Known limitation: session records over 16 KiB are reported in `issues` and omitt
 
 ## Development
 
-The verification and decision guards have 49 passing focused tests, run through the Jev necessity gate. After an audit metadata correction, only the affected 15 tests were rerun and passed. Live Codex observations include a denied direct shell test, a successful wrapper path, and completed Jev classifications before shell, file-edit, and MCP calls. These classifications do not replace native authorization. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
+From a Git checkout with Node.js 24 or later, run `npm test`. The runner isolates feature state, removes Jev/TypeSafe environment variables and executes the synthetic regression suite. No API key is needed. [CI](.github/workflows/test.yml) runs the same command on Linux and macOS; configuration is not proof that a particular remote run passed. Tests are not bundled in the npm installation. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
+
+All six native events are listed in the [hook inventory](docs/HOOKS.md), with a [portable configuration example](hooks/example.json) and Korean display names. The [open-source contribution note](docs/OSS_IMPACT.md) separates current evidence from the work needed to measure tokens, preservation and task success. Live local hook/adapter observations are narrower than independent end-to-end or cross-platform validation.
 
 Upstream projects are credited in [THIRD_PARTY.md](THIRD_PARTY.md). Our integration source is [MIT licensed](LICENSE).
 

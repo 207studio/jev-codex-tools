@@ -1,0 +1,311 @@
+diff --git a/src/app.ts b/src/app.ts
+index f141f7f..d3a8342 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -1,4 +1,5 @@
+ import { timingSafeEqual } from "node:crypto";
++import { readFileSync } from "node:fs";
+ import { brotliDecompressSync, gunzipSync, inflateSync, zstdDecompressSync } from "node:zlib";
+ import { Hono, type Context } from "hono";
+ import type { Adapter } from "./adapters/adapter.js";
+@@ -12,6 +13,7 @@ import { decide, type AskJev, type Decision } from "./decide.js";
+ import { createEventLog, type EventLog } from "./events.js";
+ import { forward } from "./upstream.js";
+ import { readUsage } from "./usage.js";
++import { routeLogMetadata } from "./privacy.js";
+ 
+ export interface Deps {
+   config: Config;
+@@ -70,8 +72,9 @@ export function createApp({ config, askJev, fetch: fetchImpl = fetch, log: write
+ 
+   /** One routed request: a line in the log, and a row on the dashboard. */
+   const log = (entry: Record<string, unknown>) => {
+-    writeLog(entry);
+-    events.record(entry);
++    const metadata = routeLogMetadata(entry);
++    writeLog(metadata);
++    events.record(metadata);
+   };
+ 
+   /**
+@@ -88,6 +91,16 @@ export function createApp({ config, askJev, fetch: fetchImpl = fetch, log: write
+   // Routing can be switched off at runtime to measure a baseline: same clients, same traffic,
+   // same token accounting, but Jev is never asked and nothing is rewritten.
+   let routing = config.routing;
++  const routingEnabled = () => {
++    if (!routing) return false;
++    const file = process.env.JEV_FEATURES_FILE;
++    if (file === undefined) return true;
++    try {
++      return JSON.parse(readFileSync(file, "utf8"))?.tool_routing_gateway === true;
++    } catch {
++      return false;
++    }
++  };
+ 
+   /**
+    * Error bodies are the only documentation an undocumented backend offers, and a finished
+@@ -115,6 +128,7 @@ export function createApp({ config, askJev, fetch: fetchImpl = fetch, log: write
+ 
+   /** The decision, plus how many tools the adapter found — they aren't always in `req.tools`. */
+   const decideFor = async <Req extends AnyRequest>(adapter: Adapter<Req>, req: Req) => {
++    if (!routingEnabled()) return { decision: { mode: "passthrough", reason: "routing_disabled" } as Decision, tools: undefined };
+     const input = adapter.toInput(req, config.maxMessageChars);
+     if ("skip" in input) return { decision: { mode: "passthrough", reason: input.skip } as Decision, tools: undefined };
+     return { decision: await decide(input, config, askJev), tools: input.tools.length };
+@@ -137,7 +151,7 @@ export function createApp({ config, askJev, fetch: fetchImpl = fetch, log: write
+     let tools: number | undefined;
+     if (!req) decision = { mode: "passthrough", reason: "unparseable_body" };
+     else if (c.req.header("x-jev-gateway") === "off") decision = { mode: "passthrough", reason: "disabled_by_header" };
+-    else if (!routing) decision = { mode: "passthrough", reason: "routing_disabled" };
++    else if (!routingEnabled()) decision = { mode: "passthrough", reason: "routing_disabled" };
+     else ({ decision, tools } = await decideFor(adapter, req));
+ 
+     const entry = { event: "route", time, path: c.req.path, model: req?.model, tools: tools ?? req?.tools?.length ?? 0 };
+@@ -214,7 +228,7 @@ export function createApp({ config, askJev, fetch: fetchImpl = fetch, log: write
+ 
+   app.route(
+     "/dashboard",
+-    dashboardRoutes(config, events, { get: () => routing, set: (enabled) => void (routing = enabled) }),
++    dashboardRoutes(config, events, { get: routingEnabled, set: (enabled) => void (routing = enabled) }),
+   );
+ 
+   app.post("/v1/chat/completions", route(chatAdapter));
+diff --git a/src/decide.ts b/src/decide.ts
+index 2b3b431..f99088d 100644
+--- a/src/decide.ts
++++ b/src/decide.ts
+@@ -15,6 +15,7 @@ import {
+   type ToolPlan,
+ } from "./questions.js";
+ import { buildState } from "./state.js";
++import { redactJevState } from "./privacy.js";
+ import type { Json, RouterInput, RouterTool } from "./types.js";
+ 
+ /** The one Jev call the router makes; injectable so tests need no network. */
+@@ -117,7 +118,7 @@ export async function decide(input: RouterInput, config: Config, askJev: AskJev)
+   if (skip) return { mode: "passthrough", reason: skip };
+ 
+   const startedAt = performance.now();
+-  const state = buildState(input, config);
++  const state = redactJevState(buildState(input, config));
+   let tools = input.tools;
+   let shortlistTokens = 0;
+   let result: SystemOneResult<Questions>;
+diff --git a/test/dashboard.test.ts b/test/dashboard.test.ts
+index eea785b..bf7a09d 100644
+--- a/test/dashboard.test.ts
++++ b/test/dashboard.test.ts
+@@ -66,9 +66,9 @@ describe("GET /dashboard/events", () => {
+       ["forced", "get_weather"],
+       ["none", undefined],
+       ["passthrough", "low_confidence"],
+-      ["passthrough", "jev_error: connect ETIMEDOUT"],
++      ["passthrough", "jev_error"],
+       ["passthrough", "no_tools"],
+-      ["passthrough", "jev_error: connect ETIMEDOUT"],
++      ["passthrough", "jev_error"],
+     ]);
+     expect(events[1]).toMatchObject({ seq: 2, path: "/v1/chat/completions", model: "gpt-test", tools: 2, confidence: 0.95, status: 200 });
+     expect(events[1]!.jev).toMatchObject({ choice: "get_weather", inputTokens: 123 });
+diff --git a/src/privacy.ts b/src/privacy.ts
+new file mode 100644
+index 0000000..a178cf7
+--- /dev/null
++++ b/src/privacy.ts
+@@ -0,0 +1,58 @@
++import type { Json } from "./types.js";
++
++const REDACTED = "[REDACTED]";
++const CREDENTIAL_ENV = /(?:^|_)(?:API_?KEY|ACCESS_KEY(?:_ID)?|PRIVATE_KEY|TOKEN|PASSWORD|PASSWD|SECRET|CLIENT_SECRET|CREDENTIALS?)$/i;
++const ASSIGNMENT = /(\b(?:[A-Za-z][A-Za-z0-9_-]*[_-])?(?:api[_-]?key|access[_-]?key|private[_-]?key|password|passwd|secret|token|clientSecret)\b["']?\s*[:=]\s*)(?:\[REDACTED\]|"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;}\]]+)/gi;
++
++/** Mask explicit credentials only; no content classification or mutation of the source. */
++export function redactJevState<T extends Json>(value: T, env: Record<string, string | undefined> = process.env): T {
++  const secrets = [...new Set(Object.entries(env)
++    .filter(([name, secret]) => CREDENTIAL_ENV.test(name) && Boolean(secret))
++    .map(([, secret]) => secret!))].sort((a, b) => b.length - a.length);
++  const redact = (text: string) => {
++    for (const secret of secrets) text = text.split(secret).join(REDACTED);
++    return text
++      .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, `Bearer ${REDACTED}`)
++      .replace(/\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/g, REDACTED)
++      .replace(ASSIGNMENT, (_match, prefix: string) => `${prefix}${REDACTED}`);
++  };
++  const visit = (item: Json): Json => {
++    if (typeof item === "string") return redact(item);
++    if (Array.isArray(item)) return item.map(visit);
++    if (item && typeof item === "object") return Object.fromEntries(Object.entries(item).map(([key, child]) => [key, visit(child)]));
++    return item;
++  };
++  return visit(value) as T;
++}
++
++/** Keep only known scalar metadata, including known scalar fields inside metering groups. */
++export function routeLogMetadata(entry: Record<string, unknown>): Record<string, unknown> {
++  const out: Record<string, Json> = {};
++  for (const key of ["event", "time", "path", "model", "mode", "tool"]) {
++    if (typeof entry[key] === "string") out[key] = entry[key].slice(0, 200);
++  }
++  if (typeof entry.reason === "string") {
++    const reason = entry.reason.startsWith("jev_error:") ? "jev_error" : entry.reason;
++    out.reason = /^[a-z][a-z0-9_]{0,80}$/.test(reason) ? reason : "unavailable";
++  }
++  for (const key of ["tools", "confidence", "status", "durationMs"]) {
++    if (typeof entry[key] === "number" && Number.isFinite(entry[key])) out[key] = entry[key];
++  }
++  for (const [group, fields] of Object.entries({
++    usage: ["input", "output", "cached", "cacheWrite", "reasoning"],
++    jev: ["confidence", "needsTool", "inputTokens", "latencyMs"],
++  })) {
++    const source = entry[group];
++    if (!source || typeof source !== "object" || Array.isArray(source)) continue;
++    const safe: Record<string, Json> = {};
++    for (const field of fields) {
++      const value = (source as Record<string, unknown>)[field];
++      if (typeof value === "number" && Number.isFinite(value)) safe[field] = value;
++    }
++    if (group === "jev" && typeof (source as Record<string, unknown>).choice === "string") {
++      safe.choice = ((source as Record<string, unknown>).choice as string).slice(0, 200);
++    }
++    out[group] = safe;
++  }
++  return redactJevState(out);
++}
+diff --git a/test/feature-switch.test.ts b/test/feature-switch.test.ts
+new file mode 100644
+index 0000000..22c3004
+--- /dev/null
++++ b/test/feature-switch.test.ts
+@@ -0,0 +1,49 @@
++import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, expect, it, vi } from "vitest";
++import { createApp } from "../src/app.js";
++import { fakeJev, fakeUpstream, testConfig } from "./helpers.js";
++
++const dirs: string[] = [];
++afterEach(() => { vi.unstubAllEnvs(); for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
++
++it("applies the feature-file switch to a running gateway, dry runs, and dashboard status", async () => {
++  const dir = mkdtempSync(join(tmpdir(), "jev-feature-switch-")); dirs.push(dir);
++  const file = join(dir, "features.json");
++  vi.stubEnv("JEV_FEATURES_FILE", file);
++  writeFileSync(file, JSON.stringify({ tool_routing_gateway: true }));
++  const jev = fakeJev({ tool: { choice: "run" }, needs_tool: { noul: 0.98 } });
++  const upstream = fakeUpstream();
++  const app = createApp({ config: testConfig(), askJev: jev.askJev, fetch: upstream.fetchImpl });
++  const body = JSON.stringify({ model: "fixture", input: "Run the tool", tools: [{ type: "function", name: "run", parameters: { type: "object", properties: {} } }] });
++  const post = (path = "/v1/responses") => app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body });
++  const enabled = async () => (await (await app.request("/dashboard/events")).json() as { router: { routing: boolean } }).router.routing;
++  expect((await post()).headers.get("x-jev-gateway-mode")).toBe("direct");
++  expect(await enabled()).toBe(true);
++  for (const contents of ['{"tool_routing_gateway":false}', '{"tool_routing_gateway":"true"}', '{}', 'invalid-json']) {
++    writeFileSync(file, contents);
++    expect((await post()).headers.get("x-jev-gateway-reason")).toBe("routing_disabled");
++    expect(await enabled()).toBe(false);
++    expect(await (await post("/router/decide")).json()).toEqual({ mode: "passthrough", reason: "routing_disabled" });
++  }
++  rmSync(file);
++  expect((await post()).headers.get("x-jev-gateway-reason")).toBe("routing_disabled");
++  expect(jev.requests).toHaveLength(1);
++  expect(upstream.calls).toHaveLength(5);
++  writeFileSync(file, '{"tool_routing_gateway":true}');
++  expect((await post()).headers.get("x-jev-gateway-mode")).toBe("direct");
++  expect(jev.requests).toHaveLength(2);
++  await app.request("/dashboard/routing?enabled=false", { method: "POST" });
++  expect((await post()).headers.get("x-jev-gateway-reason")).toBe("routing_disabled");
++  expect(await enabled()).toBe(false);
++});
++
++it("keeps the original routing behavior when no feature file is configured", async () => {
++  vi.stubEnv("JEV_FEATURES_FILE", undefined);
++  const jev = fakeJev({ tool: { choice: "run" }, needs_tool: { noul: 0.98 } });
++  const app = createApp({ config: testConfig(), askJev: jev.askJev });
++  const response = await app.request("/router/decide", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input: "Run the tool", tools: [{ type: "function", name: "run", parameters: { type: "object", properties: {} } }] }) });
++  expect((await response.json() as { mode: string }).mode).toBe("direct");
++  expect(jev.requests).toHaveLength(1);
++});
+diff --git a/test/privacy.test.ts b/test/privacy.test.ts
+new file mode 100644
+index 0000000..50f8da8
+--- /dev/null
++++ b/test/privacy.test.ts
+@@ -0,0 +1,76 @@
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { createApp } from "../src/app.js";
++import { redactJevState, routeLogMetadata } from "../src/privacy.js";
++import { fakeJev, fakeUpstream, settled, testConfig } from "./helpers.js";
++
++afterEach(() => vi.unstubAllEnvs());
++
++describe("credential privacy", () => {
++  it("masks explicit credentials recursively without modifying safe text or source values", () => {
++    const safe = "Read /tmp/password-guide.md; compare token counts and the public API.";
++    const source = { safe, nested: [
++      "opaque-env-fixture-value", "Bearer fixture-bearer-value", 'api_key="fixture-api-value"',
++      "PASSWORD='fixture password value'", '"clientSecret": "fixture-client-value"',
++      "sk-fixturekey1234567890", "GITHUB_TOKEN=fixture-token-value",
++    ] };
++    const before = JSON.stringify(source);
++    const redacted = redactJevState(source, { TYPESAFE_API_KEY: "opaque-env-fixture-value", PATH: safe });
++    expect(JSON.stringify(source)).toBe(before);
++    expect(redacted.safe).toBe(safe);
++    for (const value of ["opaque-env-fixture-value", "fixture-bearer-value", "fixture-api-value", "fixture password value", "fixture-client-value", "sk-fixturekey1234567890", "fixture-token-value"]) {
++      expect(JSON.stringify(redacted)).not.toContain(value);
++    }
++    expect(redactJevState(redacted, {})).toEqual(redacted);
++  });
++
++  it("sends only masked conversation state to Jev while preserving the upstream request", async () => {
++    vi.stubEnv("JEV_API_KEY", "opaque-integration-fixture-key");
++    const jev = fakeJev({ tool: { choice: "run" }, needs_tool: { noul: 0.98 } });
++    const upstream = fakeUpstream();
++    const app = createApp({ config: testConfig(), askJev: jev.askJev, fetch: upstream.fetchImpl });
++    const body = {
++      model: "fixture-model", instructions: "Keep opaque-integration-fixture-key private.",
++      input: [{ role: "user", content: "Use Bearer fixture-bearer-original and api_key=fixture-api-original" },
++        { type: "function_call_output", call_id: "old-call", output: "PASSWORD=fixture-password-original" }],
++      tools: [{ type: "function", name: "run", parameters: { type: "object", properties: { command: { type: "string" } }, required: ["command"] } }],
++    };
++    const response = await app.request("/v1/responses", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
++    expect(response.status).toBe(200);
++    const sentState = JSON.stringify(jev.requests[0]!.state);
++    for (const secret of ["opaque-integration-fixture-key", "fixture-bearer-original", "fixture-api-original", "fixture-password-original"]) expect(sentState).not.toContain(secret);
++    expect(upstream.calls[0]!.body.input).toEqual(body.input);
++    expect(upstream.calls[0]!.body.instructions).toBe(body.instructions);
++  });
++
++  it("keeps direct tool arguments in the client response and out of every emitted log", async () => {
++    const jev = fakeJev({ tool: { choice: "choose" }, needs_tool: { noul: 0.98 } });
++    const upstream = fakeUpstream();
++    const logged: Record<string, unknown>[] = [];
++    const app = createApp({ config: testConfig(), askJev: jev.askJev, fetch: upstream.fetchImpl, log: (entry) => logged.push(entry) });
++    const response = await app.request("/v1/responses", {
++      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
++        model: "fixture-model", input: "Choose the configured value.",
++        tools: [{ type: "function", name: "choose", parameters: { type: "object", properties: { value: { const: "fixture-private-argument" } }, required: ["value"] } }],
++      }),
++    });
++    const json = await response.json() as { output: { arguments: string }[] };
++    expect(JSON.parse(json.output[0]!.arguments)).toEqual({ value: "fixture-private-argument" });
++    expect(upstream.calls).toHaveLength(0);
++    expect(logged).toHaveLength(1);
++    expect(logged[0]).not.toHaveProperty("args");
++    expect(JSON.stringify(logged)).not.toContain("fixture-private-argument");
++    expect(logged[0]).toMatchObject({ mode: "direct", tool: "choose", jev: { inputTokens: 123 } });
++  });
++
++  it("does not emit provider error text or unlisted fields as log metadata", async () => {
++    const logged: Record<string, unknown>[] = [];
++    const upstream = fakeUpstream();
++    const app = createApp({ config: testConfig(), askJev: async () => { throw Error("fixture-private-error-body"); }, fetch: upstream.fetchImpl, log: (entry) => logged.push(entry) });
++    const response = await app.request("/v1/responses", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model: "fixture", input: "Run the tool", tools: [{ type: "function", name: "run", parameters: { type: "object", properties: {} } }] }) });
++    await response.text();
++    await settled();
++    expect(logged[0]).toMatchObject({ mode: "passthrough", reason: "jev_error" });
++    expect(JSON.stringify(logged)).not.toContain("fixture-private-error-body");
++    expect(routeLogMetadata({ event: "route", args: { private: "hidden" }, prompt: "hidden", headers: { authorization: "hidden" }, usage: { input: 2, body: "hidden" }, jev: { inputTokens: 3, topProbabilities: { hidden: 1 } } })).toEqual({ event: "route", usage: { input: 2 }, jev: { inputTokens: 3 } });
++  });
++});

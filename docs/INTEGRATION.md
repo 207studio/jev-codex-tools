@@ -38,3 +38,5 @@ These command names may conflict with upstream CLI names; use the repository's `
 ## Hooks
 
 `jev-codex-hooks` exposes the experimental handler source. Register it only through your host's supported hook/trust flow after inspecting the event contract and source. It is not automatically enabled, not a replacement for the host approval mechanism, and not a full-conversation compactor. Keep native fallback available.
+
+The [hook inventory](HOOKS.md) maps all six implemented native events to their flags, Korean display names, setup requirements and fallbacks. Start with the [portable example](../hooks/example.json); it contains placeholders and never installs or enables itself.

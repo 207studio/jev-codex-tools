@@ -11,4 +11,6 @@ Priorities:
 - Measure success rate and total model tokens on comparable tasks before and after filtering.
 - Document supported host versions and adapter-specific limitations.
 
-Submit a focused pull request with a clear description and validation results. Preserve any third-party notices in code you import. The current repository is an initial source snapshot, so do not assume a full automated test suite exists.
+Run `npm test` from a Git checkout with Node.js 24 or later. The suite isolates feature state and removes Jev/TypeSafe environment variables; use synthetic fixtures and injected service responses. Tests are maintained in Git and are not included in the installed npm package. Focused checks are appropriate during development; run the whole suite for changes to shared behavior or release packaging.
+
+Submit a focused pull request with a clear description and validation results. Preserve any third-party notices in code you import. Do not include personal hook configurations, application forms, transcripts, credentials, or generated binaries.

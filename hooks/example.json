@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "SubagentStart": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 5, "statusMessage": "하위 에이전트 Jev 판단 지침 전달"}]}],
+    "PreToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 5, "statusMessage": "Jev 실행·검증·수집·시각 판단"}]}],
+    "PermissionRequest": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 5, "statusMessage": "Jev 판단 후 기존 승인 정책 유지"}]}],
+    "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 25, "statusMessage": "Jev 도구 출력 선별·실행 기록"}]}],
+    "PreCompact": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 5, "statusMessage": "기본 대화 압축 시작 기록"}]}],
+    "PostCompact": [{"matcher": ".*", "hooks": [{"type": "command", "command": "'/ABSOLUTE/PATH/TO/jev-codex-hooks'", "timeout": 5, "statusMessage": "기본 대화 압축 완료 기록"}]}]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "upstream": "https://github.com/vinilana/jev-gateway",
+  "base_commit": "5dde23482c85dbdf273ffa026693426b1516be00",
+  "upstream_version": "0.2.2",
+  "files": [
+    "src/app.ts",
+    "src/decide.ts",
+    "test/dashboard.test.ts",
+    "src/privacy.ts",
+    "test/feature-switch.test.ts",
+    "test/privacy.test.ts"
+  ],
+  "patch_sha256": "4d805423809fa4a365b11f747ef40309d170bbba555abf73d414026b4ae17a44",
+  "verification": "reverse application check against the current source tree; not an upstream runtime test"
+}

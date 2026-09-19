@@ -1,6 +1,6 @@
 {
   "name": "@207studio/jev-codex-tools",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Opt-in Jev decision adapters and bounded local session readers for Codex.",
   "type": "module",
   "license": "MIT",
@@ -31,20 +31,29 @@
     "jev-visual": "bin/jev-visual.mjs"
   },
   "scripts": {
+    "test": "node scripts/test.mjs",
     "build:macos": "node scripts/build-macos.mjs",
     "test:visual": "node --test test/visual-review.test.mjs test/visual-enforcement.test.mjs test/visual-tokens.test.mjs test/visual-cli.test.mjs test/visual-hook.test.mjs",
     "test:verification": "node --test test/verification.test.mjs test/verification-enforcement.test.mjs test/verification-hook.test.mjs test/tool-decisions.test.mjs test/decision-hook.test.mjs",
     "test:collection": "node --test test/data-collection.test.mjs test/collection-sources.test.mjs test/collection-records.test.mjs test/collection-artifacts.test.mjs test/collection-cli.test.mjs test/collection-enforcement.test.mjs"
   },
   "files": [
+    "patches/",
     "bin/",
     "integration/*.mjs",
     "integration/macos-ax.swift",
     "scripts/build-macos.mjs",
+    "scripts/test.mjs",
     "jev-judge.mjs",
     "README.md",
+    "VISUAL_CONTROL.md",
+    "SECURITY.md",
+    "THIRD_PARTY.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
     "LICENSE",
     "docs/",
+    "hooks/",
     "skills/",
     "examples/"
   ]

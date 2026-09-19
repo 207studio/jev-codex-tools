@@ -6,7 +6,7 @@ This repository publishes the integration code developed for this toolkit. It do
 - [Jev Router](https://github.com/gargpratyush/jev-router) is a separate model-tier routing project. An optional bridge requires an explicit external entry path.
 - [Jev Context](https://github.com/zbush/jev-context) is a separate relevance-search project, not bundled here.
 - [jevprune](https://github.com/ibrahemid/jevprune) is a separate output-filtering project. An optional bridge requires an explicit external entry path.
-- [Jev Gateway](https://github.com/vinilana/jev-gateway) is a separate tool-routing proxy. Its implementation and locally patched distribution are not bundled here. A separately installed version has its own behavior and license; review those before enabling a bridge.
+- [Jev Gateway](https://github.com/vinilana/jev-gateway) is a separate tool-routing proxy. Its installed distribution is not bundled here. Our [privacy and feature-switch patch](patches/jev-gateway/README.md) includes the upstream MIT notice, exact base commit and synthetic tests. It is not applied automatically. A separately installed version has its own behavior and license; review those before enabling a bridge.
 - [Codex](https://github.com/openai/codex), Aside, Apple's accessibility APIs, and serve-sim are external host tools or interfaces. Their presence is not permission for a particular operation.
 
 Third-party names identify integrations, not endorsement. Preserve upstream notices if you redistribute upstream code in a derivative. The MIT license in this repository covers this repository's original integration source; it does not relicense external services or tools.
