@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add the opt-in `jev-conflicts` index: explicit source/symbol groups, exact evidence locations, finite contradiction/compatible/unknown labels, bounded request budgets, hash-bound decision reuse and source freshness checks.
+- Preserve unresolved candidates and collection issues, keep indexes private, and provide <=4 KB result pages without automatic code edits or whole-repository scans.
+
 ## 0.1.7
 
 - Document the six native hook events, Korean display names, feature dependencies and exact coverage boundaries; add a portable hook configuration example.

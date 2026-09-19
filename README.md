@@ -63,6 +63,8 @@ The optional macOS helper is built explicitly with `npm run build:macos` using A
 
 ## How decisions work
 
+For scoped cross-file consistency review, use [the contradiction index](docs/CONTRADICTIONS.md): `jev-conflicts --spec examples/contradictions.json`. It locates explicit literal-symbol occurrences, classifies bounded pairs through Jev, preserves UNKNOWN, and pages exact source locations with freshness checks. The `code_contradictions` flag is opt-in. A contradiction label is a review candidate, not a proven defect or permission to edit code.
+
 1. Code identifies a bounded input and allowed choices.
 2. Jev returns a choice and confidence, not executable code.
 3. Code enforces the feature flag, confidence threshold, state checks, and existing authorization boundary.

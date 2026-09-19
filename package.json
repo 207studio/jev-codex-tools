@@ -28,7 +28,8 @@
     "jev-codex-hooks": "bin/jev-codex-hooks.mjs",
     "jev-verify": "bin/jev-verify.mjs",
     "jev-collect": "bin/jev-collect.mjs",
-    "jev-visual": "bin/jev-visual.mjs"
+    "jev-visual": "bin/jev-visual.mjs",
+    "jev-conflicts": "bin/jev-conflicts.mjs"
   },
   "scripts": {
     "test": "node scripts/test.mjs",

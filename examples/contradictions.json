@@ -1,0 +1,18 @@
+{
+  "root": ".",
+  "question": "Do these bounded occurrences require incompatible behavior under the same condition? Distinguish default feature values from opt-in override checks; retain UNKNOWN when context is insufficient.",
+  "groups": [
+    {
+      "id": "visual-feature-default",
+      "symbol": "visual_review",
+      "files": [
+        "integration/features.mjs",
+        "integration/visual-cli.mjs"
+      ],
+      "context": "A false default and a later enabled-feature check can be compatible. An environment override or shared helper may be outside the truncated excerpts. Do not infer a contradiction or overall consistency from missing context."
+    }
+  ],
+  "context_lines": 4,
+  "max_pairs": 12,
+  "max_requests": 3
+}
