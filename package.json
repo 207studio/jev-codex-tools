@@ -20,6 +20,7 @@
     "jev-features": "bin/jev-features.mjs",
     "jev-session-read": "bin/jev-session-read.mjs",
     "jev-aside": "bin/jev-aside.mjs",
+    "jev-mcp": "bin/jev-mcp.mjs",
     "jev-macos": "bin/jev-macos.mjs",
     "jev-ios": "bin/jev-ios.mjs",
     "jev-codex": "bin/jev-codex.mjs",
