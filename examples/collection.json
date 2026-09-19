@@ -1,0 +1,6 @@
+{
+  "question": "Keep records about reducing coding agent context usage with finite Jev decisions.",
+  "mode": "filter",
+  "sources": [{"file": "examples/collection.txt", "format": "text"}],
+  "output_dir": "/tmp/jev-collection-example"
+}

@@ -1,0 +1,4 @@
+Jev can select relevant source records before a coding agent reads their full text.
+The local library closes at six in the evening.
+Code preserves uncertain records and copies selected values from the original source.
+Jev can select relevant source records before a coding agent reads their full text.
