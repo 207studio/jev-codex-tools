@@ -4,8 +4,9 @@ import {createHash, randomUUID} from 'node:crypto';
 import path from 'node:path';
 import {choose} from './choice.mjs';
 import {stateHome} from './paths.mjs';
+import {parseShellCommand} from './verification-enforcement.mjs';
 
-const VERSION = 1, INPUT_LIMIT = 65536, STATE_LIMIT = 4000, TTL = 120000;
+const VERSION = 2, INPUT_LIMIT = 65536, STATE_LIMIT = 4000, TTL = 120000;
 const LABELS = ['read-only','reversible','destructive','external-side-effect','unknown'];
 const hash = value => createHash('sha256').update(value).digest('hex');
 const reject = () => { throw Error('unavailable'); };
@@ -79,13 +80,26 @@ function patchMetadata(input, bytes) {
 function shellMetadata(input, bytes, inputHash) {
   const command = typeof input === 'string' ? input : input?.command ?? input?.cmd;
   const withheld = {kind:'shell',bytes,sha256:inputHash,command_form:'complex_or_unavailable',body_withheld:true};
-  if (typeof command !== 'string' || command.length > 1000 || /[\r\n;$`|&<>(){}]/.test(command)) return withheld;
-  const program = command.trim().match(/^([A-Za-z0-9_./-]+)(?:\s|$)/)?.[1];
-  if (!program || /^(?:ba|z|fi|da|k)?sh$|^(?:python\d*(?:\.\d+)?|node|nodejs|perl|ruby|php|osascript|pwsh|powershell)$/i.test(path.basename(program))) return withheld;
-  const subcommand = command.slice(command.indexOf(program) + program.length).trim().match(/^([A-Za-z][A-Za-z0-9_-]{0,40})(?:\s|$)/)?.[1];
-  const flags = [...command.matchAll(/(?:^|\s)(--?[A-Za-z][A-Za-z0-9_-]{0,48})(?=[=\s]|$)/g)].slice(0,12).map(match => short(redact(match[1]),64));
-  return {...withheld,command_form:'simple',program:short(redact(path.basename(program)),64),
-    ...(subcommand && ['git','npm','pnpm','yarn','cargo','docker','kubectl'].includes(path.basename(program)) ? {subcommand:short(redact(subcommand),48)} : {}),flags};
+  if (typeof command !== 'string' || Buffer.byteLength(command) > 4000) return withheld;
+  let parsed;
+  try { parsed = parseShellCommand(command); } catch { return withheld; }
+  if (parsed.commands.length > 8) return withheld;
+  const commands = [];
+  for (const {words,redirects} of parsed.commands) {
+    const program = path.basename(words[0]);
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(program) || redact(program) !== program ||
+      /^(?:ba|z|fi|da|k)?sh$|^(?:python\d*(?:\.\d+)?|node|nodejs|perl|ruby|php|osascript|pwsh|powershell|eval|source|env|xargs)$/i.test(program)) return withheld;
+    // Argument values, search patterns, inline code and executable paths stay local.
+    const flags = words.slice(1).filter(word => /^--?[A-Za-z][A-Za-z0-9_-]{0,48}(?:=|$)/.test(word))
+      .slice(0,12).map(word => short(redact(word.split('=',1)[0]),64));
+    const subcommand = words[1];
+    commands.push({program,flags,stderr_merged:redirects===1,
+      ...(['git','npm','pnpm','yarn','cargo','docker','kubectl'].includes(program) && /^[A-Za-z][A-Za-z0-9_-]{0,40}$/.test(subcommand ?? '')
+        ? {subcommand:short(redact(subcommand),48)} : {})});
+  }
+  return commands.length === 1
+    ? {...withheld,command_form:'simple',...commands[0]}
+    : {...withheld,command_form:'literal_chain',commands,links:parsed.links};
 }
 function argumentMetadata(tool, input, json, inputHash) {
   const bytes = Buffer.byteLength(json);

@@ -45,6 +45,54 @@ test('cache excludes tool_use_id but invalidates changed original arguments',asy
   assert.equal(calls,2);assert.equal(second.source,'cache');assert.equal(first.fingerprint,second.fingerprint);assert.notEqual(changed.fingerprint,first.fingerprint);
 });
 
+test('bounded shell pipelines expose program metadata without argument values',async t=>{
+  const options=await fixture(t);let state;
+  const result=await decideTool(event('Bash',{command:"rg -n 'PRIVATE_PATTERN' '/private/project/file' 2>&1 | head -c 4000"}),{
+    ...options,decide:async value=>{state=value;return answer();}
+  });
+  assert.equal(result.disposition,'native');assert.equal(result.hookOutput,null);
+  assert.equal(state.arguments.command_form,'literal_chain');
+  assert.deepEqual(state.arguments.commands,[{program:'rg',flags:['-n'],stderr_merged:true},{program:'head',flags:['-c'],stderr_merged:false}]);
+  assert.deepEqual(state.arguments.links,['|']);
+  assert.equal(state.arguments.body_withheld,true);
+  assert.ok(!JSON.stringify(state).includes('PRIVATE_PATTERN'));
+  assert.ok(!JSON.stringify(state).includes('/private/project/file'));
+});
+
+test('literal batches retain command ordering and do not grant permission',async t=>{
+  const options=await fixture(t);let state;
+  const result=await decideTool(event('exec_command',{cmd:'git status --short 2>&1 | head -c 4000\nls src 2>&1 | tail -c 4000'}),{
+    ...options,decide:async value=>{state=value;return answer('unknown',1);}
+  });
+  assert.deepEqual(state.arguments.commands.map(row=>row.program),['git','head','ls','tail']);
+  assert.equal(state.arguments.commands[0].subcommand,'status');
+  assert.deepEqual(state.arguments.links,['|','\n','|']);
+  assert.equal(result.choice,'unknown');assert.equal(result.uncertain,true);assert.equal(result.hookOutput,null);
+});
+
+test('scripts, substitutions, oversized chains and unsupported redirections stay withheld',async t=>{
+  const options=await fixture(t);
+  const commands=['node -e "PRIVATE_SCRIPT" | head -c 4000','env python3 private.py | head -c 4000','cat $(secret) | head -c 4000',
+    'cat input > output','cat x | xargs rm',Array(9).fill('pwd').join('\n'),'rg '+ 'a'.repeat(4000)];
+  for(const command of commands) {
+    let state;
+    await decideTool(event('Bash',{command}),{...options,decide:async value=>{state=value;return answer('unknown');}});
+    assert.equal(state.arguments.command_form,'complex_or_unavailable',command.slice(0,40));
+    assert.equal(state.arguments.commands,undefined);assert.equal(state.arguments.program,undefined);
+  }
+});
+
+test('pipeline flags expose names only and redact credentials',async t=>{
+  const options=await fixture(t);let state;
+  await decideTool(event('Bash',{command:"curl --header 'Authorization: Bearer PRIVATE_TOKEN' --data='PRIVATE_BODY' https://private.example/path | head -c 4000"}),{
+    ...options,decide:async value=>{state=value;return answer('external-side-effect');}
+  });
+  assert.deepEqual(state.arguments.commands[0].flags,['--header','--data']);
+  const json=JSON.stringify(state);
+  for(const withheld of ['PRIVATE_TOKEN','PRIVATE_BODY','Authorization','private.example'])assert.ok(!json.includes(withheld));
+  assert.ok(Buffer.byteLength(json)<=4000);
+});
+
 test('cache expires after 120 seconds and is separated by turn',async t => {
   const options=await fixture(t);let calls=0,time=1000;
   const decide=async()=>{calls++;return answer();},now=()=>time,input=event('Bash',{command:'pwd'});
