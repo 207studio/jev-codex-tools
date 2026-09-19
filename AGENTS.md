@@ -5,4 +5,4 @@ Use Jev only for finite decisions; keep facts, caching, execution, and safety ch
 Retain UNKNOWN and low-confidence evidence; stop UI actions when state or authorization is unclear.
 Never commit credentials, conversations, runtime state, generated binaries, or personal configuration.
 Document actual validation and limitations; do not infer token savings or platform compatibility.
-Before verification, use jev-verify plan; route execution through its gate and keep Jev's evidence judgment separate from actual exit codes.
+Before verification, use jev-verify plan and run; with shell enforcement enabled use its registered absolute path, never bypass a denial, and keep Jev's judgment separate from actual exit codes.

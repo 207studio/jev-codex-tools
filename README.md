@@ -16,7 +16,7 @@ Independent community project. Not an official OpenAI or TypeSafe product. Jev r
 | `jev-macos` | Select allowed accessibility controls and recheck before AXPress | macOS, locally built helper, and OS accessibility permission required |
 | `jev-ios` | Select allowed Simulator accessibility elements through an existing serve-sim connection | Existing device/server required; no device launched automatically |
 | `jev-features` | Explicit feature enable/disable | All features default off |
-| `jev-verify` | Ask Jev before attempting a check and classify its bounded result | Required checks and real exit codes remain authoritative |
+| `jev-verify` | Ask Jev before attempting a check and classify its bounded result | Optional native shell guard enforces the wrapper path; required checks and real exit codes remain authoritative |
 | Optional adapters | Hook examples and bridges to separately installed routers/output filters | External projects are not bundled or installed automatically |
 
 ## Install from source
@@ -68,7 +68,7 @@ Known limitation: session records over 16 KiB are reported in `issues` and omitt
 
 ## Development
 
-The verification gate has 17 passing focused tests, run through its Jev necessity gate. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
+The verification gate and shell enforcement have 32 passing focused tests, run through the Jev necessity gate. A live Codex nested shell call was denied before execution, while the same harmless check completed through the registered wrapper. Other parts of the portable extraction have not been functionally tested. No live secrets, user transcripts, generated binaries, or third-party installed packages are part of the repository. Contributions that add synthetic tests and improve lossless bounded reading are especially useful; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Upstream projects are credited in [THIRD_PARTY.md](THIRD_PARTY.md). Our integration source is [MIT licensed](LICENSE).
 

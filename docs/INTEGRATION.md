@@ -11,6 +11,8 @@ jev-features enable session_reader
 
 For verification, enable `verification_gate` and `verification_assessment` and use `jev-verify plan/run/assess`. See [the verification policy](VERIFICATION.md). The necessity decision does not authorize a command, and the result judgment does not override its actual exit code.
 
+For strict shell enforcement, also enable `verification_enforcement`, register the native PreToolUse handler through the host's trust flow, and configure `verification_executable` as the installed wrapper's absolute path. Covered shell calls that are neither literal observation commands nor a canonical wrapper invocation are denied before execution. Existing interactive sessions and other tool classes remain outside this guard. Do not change trust hashes by hand.
+
 Supply `JEV_API_KEY` or `TYPESAFE_API_KEY` using your existing secret management. A per-feature `JEV_<FEATURE>_ENABLED=0` override disables that feature for a command. Do not embed real credentials in hook configuration examples or repository files.
 
 ## Optional third-party bridges

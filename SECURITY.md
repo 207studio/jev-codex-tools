@@ -6,6 +6,8 @@ Source session files are read-only. Selected excerpts may be saved in private lo
 
 Verification specs contain caller-supplied argv arrays. Jev may select whether or which supplied verification to use; it must not generate executable code. The wrapper is not a sandbox: run only commands already authorized in the current task. Full verification logs are kept locally and may contain secrets even when outbound judgment evidence is masked.
 
+The optional verification enforcement hook rejects covered shell calls outside a narrow observation grammar or an exact configured wrapper path. It never grants host permission. It protects against ordinary workflow bypass, not a hostile process, modified wrapper, disabled hook, existing interactive session, or hook-exempt tool. Hook installation and trust must use the host's supported flow; do not manufacture trusted hashes.
+
 Feature flags default off. Installation does not register hooks or alter Codex permissions. UI execution requires an explicit execution flag, allowed targets, and the host permissions. This code is not a sandbox or a substitute for the host approval mechanism. A risk-classification result does not authorize an operation.
 
 The package is an experimental initial extraction; it has not undergone a security audit. Native helpers, routers, browser tools, and platform versions may differ from the original local environment.

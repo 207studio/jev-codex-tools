@@ -1,6 +1,6 @@
 {
   "task": "verification-policy-change",
-  "goal": "Check mandatory, uncertainty, and execution-status invariants of the verification policy.",
+  "goal": "Check verification necessity, strict shell enforcement, native hook deny responses, uncertainty fallback, and execution-status invariants.",
   "cwd": ".",
   "files": [
     "integration/verification.mjs",
@@ -9,12 +9,22 @@
     "integration/features.mjs",
     "integration/paths.mjs",
     "test/verification.test.mjs",
-    "package.json"
+    "package.json",
+    "integration/verification-enforcement.mjs",
+    "integration/codex-hooks.mjs",
+    "test/verification-enforcement.test.mjs",
+    "test/verification-hook.test.mjs"
   ],
   "scope_complete": true,
   "mandatory": true,
   "risk": "normal",
   "new_failure": false,
-  "argv": ["node", "--test", "test/verification.test.mjs"],
+  "argv": [
+    "node",
+    "--test",
+    "test/verification.test.mjs",
+    "test/verification-enforcement.test.mjs",
+    "test/verification-hook.test.mjs"
+  ],
   "timeout_ms": 30000
 }

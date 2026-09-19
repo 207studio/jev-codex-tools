@@ -2,9 +2,11 @@ import {readFile,writeFile,mkdir,appendFile} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
 import {stateHome} from './paths.mjs';
 import path from 'node:path';
-import {enabled} from './features.mjs';
+import {enabled,settings} from './features.mjs';
+import {verificationEnforcement} from './verification-enforcement.mjs';
 import {externalEntry} from './external.mjs';
 import {choose} from './choice.mjs';
 import {contextWindow,minimumOutputBytes,toolOutput} from './context-window.mjs';
@@ -91,17 +93,28 @@ async function compact(event) {
   return {continue:false,stopReason:feedback};
 }
 
+let hookEvent = null, enforceVerification = false;
 try {
   let input='';
   for await(const chunk of process.stdin){input+=chunk;if(Buffer.byteLength(input)>1048576)throw Error('oversized');}
   const event=JSON.parse(input);
+  hookEvent=event;
+  enforceVerification=enabled('verification_enforcement');
   await mkdir(data,{recursive:true,mode:0o700});
   const name=event.hook_event_name;
-  if(['PreCompact','PostCompact'].includes(name)) {
+  const configuredWrapper=settings().verification_executable;
+  const blocked=verificationEnforcement(event,{active:enforceVerification,trustedExecutables:[
+    fileURLToPath(new URL('../bin/jev-verify.mjs',import.meta.url)),
+    ...(typeof configuredWrapper==='string' && path.isAbsolute(configuredWrapper) ? [configuredWrapper] : [])
+  ]});
+  if(blocked) {
+    await appendFile(path.join(data,'verification-enforcement.jsonl'),JSON.stringify({time:Date.now(),session_id:event.session_id,tool_use_id:event.tool_use_id,tool_name:event.tool_name,decision:'deny',executed:false})+'\n',{mode:0o600}).catch(()=>{});
+    emit(blocked);
+  } else if(['PreCompact','PostCompact'].includes(name)) {
     if(enabled('compaction_audit'))await appendFile(path.join(data,'native-compaction.jsonl'),JSON.stringify({time:Date.now(),session_id:event.session_id,turn_id:event.turn_id,event:name,trigger:event.trigger,provider:'codex-native',jev_used:false})+'\n',{mode:0o600});
     emit({});
   } else if(name==='SubagentStart') {
-    emit(enabled('subagent_contract') ? {hookSpecificOutput:{hookEventName:'SubagentStart',additionalContext:'부모가 전달한 전역 AGENTS.md와 작업 범위를 따른다. 이미 받은 지침은 재독하지 않는다. 사실·캐시는 코드로 확인하고 모든 별도 선택형 의미 판단은 Jev에 먼저 맡겨 YES/NO/UNKNOWN 또는 선택값·신뢰도만 받는다. 파일 판단은 jev-judge를 사용한다. 검증 시도 전 jev-verify plan --spec 경로로 필요성을 판단하고 실행은 jev-verify run --spec 경로 --execute를 쓴다. Jev 결과평가와 실제 종료코드를 구분하며 필수검증은 생략하지 않는다. 세션 대화 조회는 jev-session-read --thread ID --question 질문을 우선하며 보호 원문·UNKNOWN·페이지 커서를 유지한다. 장애·낮은 신뢰도는 UNKNOWN으로 남기고 안전 승인을 대신하지 않는다. 코드 작성과 필수 분석은 Codex가 담당한다. 원문·로그·전체 이력을 재중계하지 않으며 작업은 변경·검증·주의만 짧게 반환한다.'}} : {});
+    emit(enabled('subagent_contract') ? {hookSpecificOutput:{hookEventName:'SubagentStart',additionalContext:'부모가 전달한 전역 AGENTS.md와 작업 범위를 따른다. 이미 받은 지침은 재독하지 않는다. 사실·캐시는 코드로 확인하고 모든 별도 선택형 의미 판단은 Jev에 먼저 맡겨 YES/NO/UNKNOWN 또는 선택값·신뢰도만 받는다. 파일 판단은 jev-judge를 사용한다. 셸 검증은 실행 훅이 경유를 강제한다. 등록된 jev-verify 절대경로를 사용하며 차단 시 다른 셸·스크립트로 우회하지 않는다. 검증 시도 전 jev-verify plan --spec 경로로 필요성을 판단하고 실행은 jev-verify run --spec 경로 --execute를 쓴다. Jev 결과평가와 실제 종료코드를 구분하며 필수검증은 생략하지 않는다. 세션 대화 조회는 jev-session-read --thread ID --question 질문을 우선하며 보호 원문·UNKNOWN·페이지 커서를 유지한다. 장애·낮은 신뢰도는 UNKNOWN으로 남기고 안전 승인을 대신하지 않는다. 코드 작성과 필수 분석은 Codex가 담당한다. 원문·로그·전체 이력을 재중계하지 않으며 작업은 변경·검증·주의만 짧게 반환한다.'}} : {});
   } else if(name==='PostToolUse') {
     if(enabled('tool_gate')) await appendFile(path.join(data,'execution.jsonl'),JSON.stringify({time:Date.now(),session_id:event.session_id,turn_id:event.turn_id,tool_use_id:event.tool_use_id,tool_name:event.tool_name,executed:true,response_type:typeof event.tool_response,response_keys:event.tool_response&&typeof event.tool_response==='object'?Object.keys(event.tool_response).slice(0,12):[],response_markers:typeof event.tool_response==='string'?{json:event.tool_response.trimStart().startsWith('{'),unified:event.tool_response.startsWith('Chunk ID:'),wall:event.tool_response.startsWith('Wall time:')}:{},exit_code:event.tool_response?.exit_code??event.tool_response?.exitCode??null})+'\n',{mode:0o600});
     emit(await compact(event));
@@ -111,4 +124,8 @@ try {
     emit(name==='PermissionRequest'&&verdict.automatic_read_only
       ? {hookSpecificOutput:{hookEventName:'PermissionRequest',decision:{behavior:'allow'}}} : {});
   } else emit({});
-} catch { emit({}); }
+} catch {
+  emit(enforceVerification && hookEvent?.hook_event_name==='PreToolUse'
+    ? {hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:'Jev 검증 실행 게이트 오류로 실행을 보류했습니다. 원인을 수정한 뒤 다시 시도하세요.'}}
+    : {});
+}

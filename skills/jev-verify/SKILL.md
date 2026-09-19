@@ -11,6 +11,8 @@ Run `jev-verify plan --spec FILE` before attempting verification. Jev selects RU
 
 Run an authorized command with `jev-verify run --spec FILE --execute`. This repeats the gate using the current file fingerprint and reuses eligible cached decisions. NARROW may use only the caller's supplied `narrow_argv`; Jev never invents a command. A SKIP result means not executed, never passed.
 
+When `verification_enforcement` is enabled, use the registered absolute wrapper path. The native shell hook blocks direct checks and unknown scripts; keep work inside the wrapper rather than switching to another interpreter, interactive process, or tool to evade a denial. Exact literal observation commands remain available. This guard does not cover all hosted, browser, or MCP tools.
+
 The wrapper records the actual exit code and a private full log. Jev separately returns SUPPORTED, CONTRADICTED, or INSUFFICIENT about the goal and bounded evidence. API failure or uncertainty is not a test pass. For an existing log use `jev-verify assess --spec FILE --log LOG --exit-code N`, reporting the original exit code honestly.
 
 After a sufficient relevant check passes, stop unless code/input changes, a new failure, or a required check justifies more work. Never use this decision gate to bypass a host approval, permission boundary, user hold, or required safety validation. Do not forward full logs or repeat cached reasoning to the parent model.
