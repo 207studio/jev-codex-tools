@@ -1,6 +1,6 @@
 {
   "name": "@207studio/jev-codex-tools",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Opt-in Jev decision adapters and bounded local session readers for Codex.",
   "type": "module",
   "license": "MIT",
@@ -27,10 +27,12 @@
     "jev-gateway-codex": "bin/jev-gateway-codex.mjs",
     "jev-codex-hooks": "bin/jev-codex-hooks.mjs",
     "jev-verify": "bin/jev-verify.mjs",
-    "jev-collect": "bin/jev-collect.mjs"
+    "jev-collect": "bin/jev-collect.mjs",
+    "jev-visual": "bin/jev-visual.mjs"
   },
   "scripts": {
     "build:macos": "node scripts/build-macos.mjs",
+    "test:visual": "node --test test/visual-review.test.mjs test/visual-enforcement.test.mjs test/visual-tokens.test.mjs test/visual-cli.test.mjs test/visual-hook.test.mjs",
     "test:verification": "node --test test/verification.test.mjs test/verification-enforcement.test.mjs test/verification-hook.test.mjs test/tool-decisions.test.mjs test/decision-hook.test.mjs",
     "test:collection": "node --test test/data-collection.test.mjs test/collection-sources.test.mjs test/collection-records.test.mjs test/collection-artifacts.test.mjs test/collection-cli.test.mjs test/collection-enforcement.test.mjs"
   },

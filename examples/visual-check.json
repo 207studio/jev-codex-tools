@@ -1,0 +1,13 @@
+{
+  "mode": "assess",
+  "question": "Do the supplied measurements support the requested button size and containment checks?",
+  "observation": {
+    "viewport": {"width": 390, "height": 844},
+    "elements": [{"id": "save", "rect": {"x": 20, "y": 740, "width": 350, "height": 48}, "text": "Save", "foreground": "#ffffff", "background": "#111111"}]
+  },
+  "checks": [
+    {"id": "inside", "type": "inside_viewport", "ids": ["save"]},
+    {"id": "size", "type": "min_target", "ids": ["save"], "min": 44},
+    {"id": "readable", "type": "contrast", "ids": ["save"], "min": 4.5}
+  ]
+}
