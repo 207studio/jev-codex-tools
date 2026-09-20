@@ -5,7 +5,7 @@ import path from 'node:path';
 import {configHome} from './paths.mjs';
 
 export const featuresPath = path.resolve(process.env.JEV_FEATURES_FILE || path.join(configHome, 'features.json'));
-export const defaults = Object.freeze({judge:false,context:false,prune:false,routing:false,instant_compaction:false,progress_compaction:false,early_compaction:false,compaction_audit:false,tool_gate:false,browser_selector:false,browser_fanout:false,computer_selector:false,ios_selector:false,decision_metrics:false,unknown_diagnostics:false,session_reader:false,tool_routing_gateway:false,control_loop:false,subagent_contract:false,verification_gate:false,verification_assessment:false,verification_enforcement:false,decision_enforcement:false,data_collection:false,collection_enforcement:false,visual_review:false,visual_enforcement:false,code_contradictions:false});
+export const defaults = Object.freeze({judge:false,context:false,prune:false,routing:false,instant_compaction:false,progress_compaction:false,early_compaction:false,compaction_audit:false,tool_gate:false,browser_selector:false,browser_fanout:false,computer_selector:false,ios_selector:false,decision_metrics:false,unknown_diagnostics:false,session_reader:false,tool_routing_gateway:false,control_loop:false,subagent_contract:false,verification_gate:false,verification_assessment:false,verification_enforcement:false,decision_enforcement:false,decision_recovery_fastpath:false,data_collection:false,collection_enforcement:false,visual_review:false,visual_enforcement:false,code_contradictions:false});
 export function settings() {
   try {
     const value = JSON.parse(readFileSync(featuresPath, 'utf8'));

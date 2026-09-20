@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an opt-in parser-backed recovery fast path that records policy handling without claiming Jev coverage or granting approval; avoid unused tool-classification diagnosis.
+- Scope four skill triggers, move workflow details to on-demand references, shorten the child reminder and document a reversible selective-use profile without changing native permissions or the shared Jev Mode CLI.
+
 - Add a manually installed Codex Jev Mode skill and inactive hook example for an existing shared CLI; document the pip metadata trap, zero raw-item output policy, measured example batch and limits of token/child-coverage metrics.
 
 - Preserve shared Jev failure causes, explicit uncertain confidence and low-confidence observations through verification caches; add optional bounded cause/candidate diagnosis and judge `--details` without changing the original verdict or host permissions.
