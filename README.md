@@ -70,6 +70,8 @@ For existing TypeSafe skills, optional MCP access and Ultrafast-style operation/
 
 For five or more bounded semantic judgments with record text kept outside agent context, see [Jev Mode for Codex](docs/JEV_MODE.md). The adapted skill reuses an existing shared CLI; its hook example is inactive and requires user approval.
 
+To reduce redundant per-step judgments, mandatory wrapper calls and repeated context injection, see [selective Jev use](docs/SELECTIVE_USAGE.md). Its opt-in profile retains native policy and the non-exempt tool classification path.
+
 To distinguish provider failures from missing evidence or missing options, see [UNKNOWN diagnostics](docs/UNKNOWN_DIAGNOSTICS.md). The optional follow-up preserves the original verdict and proposes only exact source labels; it cannot create execution permission.
 
 1. Code identifies a bounded input and allowed choices.

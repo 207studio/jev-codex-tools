@@ -1,12 +1,11 @@
 ---
 name: jev-action-control
-description: Delegate bounded, authorized UI navigation to finite Jev selection and deterministic Aside, macOS, or iOS Simulator adapters.
+description: Run explicitly authorized repeated browser, macOS or iOS actions with bounded Jev choices.
 ---
 
-Identify the allowed app or tab, permitted labels, goal, and stopping condition before using an adapter. Read the installed host tool's active instructions; do not reactivate disabled dependencies.
+# 허용된 반복 UI 조작
 
-Before separate structured visual judgments or implementation-candidate selection, use `jev-visual --spec FILE` with measured DOM/AX/geometry evidence. Its pixel_review remains NOT_PERFORMED: Jev accepts text, not images. Keep required pixel inspection, code writing and image generation in capable host tools. Optional token application requires `--apply --execute`, a predeclared candidate and an unchanged target-file hash; it is not visual acceptance.
-
-Use `jev-aside`, `jev-macos`, or `jev-ios` with `--help` for the current arguments. Features are opt-in. The default mode selects without executing; `--execute` is only for actions already authorized by the caller.
-
-Unknown decisions, stale state, unavailable permissions, or unsupported controls must stop or return control. Jev must not invent selectors, coordinates, or shell commands. Browser and Simulator fixtures are not proof of native-device correctness, and byte counts are not token savings.
+같은 정책으로 여러 UI 단계를 반복할 때 쓴다. 단일 클릭·일회성 시각 확인에는 추가 Jev 판단을 붙이지 않는다.
+대상·허용 동작·완료 조건을 정하고 필요한 플랫폼의 [연결·실행 규칙](references/actions.md)만 확인한다. 브라우저는 활성 Aside를 우선한다.
+실행 직전 상태를 다시 확인하고 낮은 신뢰도·권한 거부·stale 상태에서는 멈춘다. UNKNOWN이나 미확인 픽셀을 성공으로 바꾸지 않는다.
+GPT image_gen 이미지 생성은 Jev 시각 판단에서 제외한다. 실제 픽셀 확인과 코드 작성은 해당 지원 도구로 수행한다.

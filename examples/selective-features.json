@@ -1,0 +1,14 @@
+{
+  "decision_enforcement": true,
+  "decision_recovery_fastpath": true,
+  "tool_gate": true,
+  "verification_enforcement": false,
+  "verification_gate": false,
+  "verification_assessment": false,
+  "unknown_diagnostics": false,
+  "collection_enforcement": false,
+  "visual_enforcement": false,
+  "instant_compaction": false,
+  "progress_compaction": false,
+  "early_compaction": false
+}
