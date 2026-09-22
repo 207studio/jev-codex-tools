@@ -8,6 +8,10 @@ A [single-pair synthetic comparison](docs/TOKEN_COMPARISON_20260922.md) recorded
 
 Independent community project. Not an official OpenAI or TypeSafe product. Jev remains an external service with its own terms and pricing.
 
+## Measured findings
+
+[한국어 조사 결과](docs/TOKEN_SAVINGS_FINDINGS.md) brings together the bounded Jev pilot, native input budgets, exact fixtures and limitations. Input-token usage and rendered text bytes are reported separately.
+
 ## What's included
 
 | Tool | Purpose | Boundary |
