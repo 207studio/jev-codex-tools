@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {diagnoseUnknown} from '../integration/unknown-diagnosis.mjs';
+import {diagnoseUnknown,diagnoseUnknownReason} from '../integration/unknown-diagnosis.mjs';
 
 const input = () => ({
   state:{available:['RUN', 'PAUSE']}, instructions:'Choose the appropriate next label.',
@@ -149,4 +149,15 @@ test('free text in a response cannot supply a value or path', async () => {
     proposed_option:{value:'DELETE', path:'$["other"]'},
   })});
   assert.equal(result.proposed_option, undefined);
+});
+
+test('reason-only diagnostic has one head, no candidates, and no retry after uncertainty', async () => {
+  let calls = 0;
+  const diagnostic = await diagnoseUnknownReason(input(), {decideMany:async (state, questions) => {
+    calls++;assert.deepEqual(Object.keys(questions),['reason']);assert.equal(Object.hasOwn(state,'literal_candidates'),false);
+    return {reason:head('MISSING_EVIDENCE')};
+  }});
+  assert.deepEqual(diagnostic,{reason:'MISSING_EVIDENCE',confidence:0.9,request_attempted:true});assert.equal(calls,1);
+  const failed=await diagnoseUnknownReason(input(),{decideMany:async()=>{calls++;throw Error('secret error');}});
+  assert.deepEqual(failed,{reason:'UNKNOWN',confidence:0,request_attempted:true});assert.equal(calls,2);
 });

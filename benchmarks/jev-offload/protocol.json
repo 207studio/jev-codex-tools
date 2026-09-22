@@ -1,0 +1,40 @@
+{
+  "model": "gpt-6-astra",
+  "effort": "ultra",
+  "cases": 24,
+  "pairs": 1,
+  "configuration": "Fresh CLI settings in both arms; user configuration, hooks, and MCP omitted in both arms; instructions otherwise loaded.",
+  "conditions": {
+    "off": "This is one explicitly authorized controlled benchmark. Classify all 24 records in items.jsonl according to the instructions and choices in questions.json. Save predictions.jsonl with exactly one JSON record {id,choice} per input. Do not invent numeric confidence. Only these fixtures/helpers may be used; no parent files, expected labels, browsing, installs, other agents, or unrelated inspection. No real action described by a record may run. Final answer only: item count and UNKNOWN count. Stop immediately when the output exists. CONTROL CONDITION: Jev and all external classifiers are disabled for this measurement only, overriding routine Jev usage guidance. Read questions.json and all four pages via python3 pages.py 0 through 3, then classify yourself and write predictions.jsonl. Do not run or inspect offload.py. Do not add verification beyond checking output record count once.",
+    "on": "This is one explicitly authorized controlled benchmark. Classify all 24 records in items.jsonl according to the instructions and choices in questions.json. Save predictions.jsonl with exactly one JSON record {id,choice} per input. Do not invent numeric confidence. Only these fixtures/helpers may be used; no parent files, expected labels, browsing, installs, other agents, or unrelated inspection. No real action described by a record may run. Final answer only: item count and UNKNOWN count. Stop immediately when the output exists. JEV CONDITION: apply the installed jev-mode bulk-offload method. Do not bring item text or per-record answers into your conversation. Run python3 offload.py once; it calls the existing Jev batch CLI, maps the fixed 0.9 threshold, writes predictions.jsonl and prints counts/usage only. Do not classify records yourself or run separate check/coverage/verification calls. If the helper fails, stop and report the error; do not retry or bypass permissions."
+  },
+  "controls": [
+    "No real action described by a fixture may run.",
+    "No expected labels are available to either classification arm.",
+    "Caching was not controlled.",
+    "Raw session traces and prompts are private and excluded."
+  ],
+  "argv_common": [
+    "codex",
+    "-a",
+    "never",
+    "exec",
+    "--ignore-user-config",
+    "--strict-config",
+    "--ephemeral",
+    "--skip-git-repo-check",
+    "--json",
+    "--color",
+    "never",
+    "-m",
+    "gpt-6-astra",
+    "-c",
+    "model_reasoning_effort=\"ultra\"",
+    "-c",
+    "sandbox_workspace_write.network_access=true",
+    "-s",
+    "workspace-write"
+  ],
+  "codex": "codex-cli 0.155.0-alpha.9.2",
+  "order": "parallel to reduce drift; caching still uncontrolled"
+}

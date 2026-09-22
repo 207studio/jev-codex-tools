@@ -4,6 +4,8 @@ Experimental, opt-in tools from **207 Studio** that use TypeSafe Jev for bounded
 
 The goal is to avoid repeatedly sending unnecessary logs, conversation excerpts, and UI observations to a general coding model. **This repository does not yet establish a general token-saving percentage.** It does not replace Codex, native conversation compaction, or the host's approval system.
 
+A [single-pair synthetic comparison](docs/TOKEN_COMPARISON_20260922.md) recorded less Codex input with bulk offload, but one additional abstention; it does not establish accuracy parity. [Input policy](docs/INPUT_POLICY.md) keeps bulk raw text outside the model and preserves necessary evidence. [UNKNOWN explanations](docs/UNKNOWN_DIAGNOSTICS.md) retain the original verdict and label inferred causes.
+
 Independent community project. Not an official OpenAI or TypeSafe product. Jev remains an external service with its own terms and pricing.
 
 ## What's included
