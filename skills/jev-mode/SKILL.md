@@ -10,3 +10,4 @@ description: Batch 5+ fixed-label judgments without loading record text into age
 호출당 레코드 하나와 명확한 choice를 사용하며 가중치·임계값은 코드가 소유한다. 낮은 confidence와 UNKNOWN을 숨기지 않는다.
 배치가 필요할 때만 [요청 형식·실행·계측](references/batch.md)을 읽는다. text_tokens는 입력 추정량이며 Codex 컨텍스트 유입 실측이 아니다.
 공유 CLI는 이미 설치되어 있다. 연결 미확인·설정 변경 때만 jev-mode check를 실행하고 실패하면 멈춘다; 재설치하거나 공유 파일을 수정하지 않는다.
+복합 작업의 경로가 모호할 때만 [선택적 실행 계획](references/workflow.md)을 읽는다; 단건·명확한 역할은 추가 호출 없이 처리한다.

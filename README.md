@@ -14,6 +14,8 @@ Independent community project. Not an official OpenAI or TypeSafe product. Jev r
 
 ## What's included
 
+- [Bounded workflow advice](docs/WORKFLOW_POLICY.md): avoid extra Jev decisions for known work, ask once for ambiguous mixed tasks, and reuse an unchanged plan. No additional per-tool hook.
+
 | Tool | Purpose | Boundary |
 |---|---|---|
 | `jev-judge` | Return a finite judgment over an explicitly scoped file or question | No arbitrary text generation or execution |

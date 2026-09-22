@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional `jev-workflow` advice: code handles known routes, Jev handles ambiguous mixed metadata once, and identical saved plans are reused without another request. Preserve explicit models, uncertainty, native approvals and required verification.
+
 - Explain UNKNOWN outcomes with bounded Korean cause/action metadata; handle runtime failures and low confidence locally, and permit only one opt-in reason-only follow-up for explicit uncertainty. Preserve original verdicts, exit codes and cache provenance.
 - Publish exact synthetic bulk-offload fixtures and a one-pair token comparison with separate Jev usage, caching limitations and an additional abstention; tighten raw-input policy without claiming universal read interception.
 
