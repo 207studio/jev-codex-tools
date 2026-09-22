@@ -30,6 +30,7 @@ test('transport, HTTP, JSON and response-shape failures retain distinct safe rea
     let observed;
     const result=await chooseDetailed({},'Question',criteria,{...options,fetchImpl,onDiagnostic:info=>{observed=info;}});
     assert.equal(result.answer,null);assert.equal(result.diagnostic.status,status);assert.equal(observed.status,status);
+    assert.equal(result.diagnostic.unknown_reason.source,'runtime');assert.equal(result.diagnostic.unknown_reason.inferred,false);
     assert.ok(!JSON.stringify(result).includes('sensitive detail'));
     if(status==='http_error')assert.equal(result.diagnostic.http_status,429);
   }
@@ -50,9 +51,19 @@ test('strict probability validation remains in force and reports its boundary',a
 test('low confidence preserves the actual model choice and caller threshold',async()=>{
   const answer=await choose({},'Question',criteria,{...options,minConfidence:0.9,fetchImpl:async(_url,request)=>response(JSON.parse(request.body),()=>({choice:'YES',confidence:0.85}))});
   assert.equal(answer.choice,'YES');assert.equal(answer.confidence,0.85);assert.equal(answer.diagnostic.status,'low_confidence');
+  assert.equal(answer.diagnostic.unknown_reason.source,'runtime');assert.equal(answer.diagnostic.unknown_reason.code,'LOW_CONFIDENCE');
 });
 
-test('semantic UNKNOWN receives one bounded diagnosis and a literal suggestion without changing the answer',async()=>withDiagnosis(async()=>{
+test('low-confidence UNKNOWN is local and never requests a reason',async()=>withDiagnosis(async()=>{
+  let calls=0;
+  const result=await chooseDetailed({},'Question',criteria,{...options,diagnose:true,minConfidence:0.9,fetchImpl:async(_url,request)=>{
+    calls++;return response(JSON.parse(request.body),()=>({choice:'UNKNOWN',confidence:0.5}));
+  }});
+  assert.equal(calls,1);assert.equal(result.answer.choice,'UNKNOWN');assert.equal(result.diagnostic.status,'low_confidence');
+  assert.equal(result.diagnostic.unknown_reason.code,'LOW_CONFIDENCE');assert.equal(result.diagnostic.diagnosis,undefined);
+}));
+
+test('explicit UNKNOWN receives one reason-only diagnosis without changing the answer',async()=>withDiagnosis(async()=>{
   let calls=0;
   const result=await chooseDetailed({label:'MAYBE'},'Classify this label',criteria,{...options,diagnose:true,fetchImpl:async(_url,request)=>{
     calls++;const body=JSON.parse(request.body);
@@ -60,7 +71,8 @@ test('semantic UNKNOWN receives one bounded diagnosis and a literal suggestion w
   }});
   assert.equal(calls,2);assert.equal(result.answer.choice,'UNKNOWN');assert.equal(result.answer.confidence,1);
   assert.equal(result.diagnostic.diagnosis.reason,'MISSING_OPTION');
-  assert.equal(result.diagnostic.diagnosis.proposed_option.value,'MAYBE');
+  assert.equal(result.diagnostic.diagnosis.proposed_option,undefined);
+  assert.deepEqual(result.diagnostic.unknown_reason,{code:'MISSING_OPTION',category:'semantic',label:'선택지가 부족함',next_action:'필요한 선택지를 추가',source:'jev',inferred:true,display:'UNKNOWN · 선택지가 부족함 (추정) — 필요한 선택지를 추가'});
 }));
 
 test('API failures cannot trigger semantic retries even when diagnosis is enabled',async()=>withDiagnosis(async()=>{
@@ -78,6 +90,15 @@ test('a multi-head response gets at most one diagnosis and diagnosis cannot recu
   }});
   assert.equal(calls,2);assert.equal(answers.first.choice,'UNKNOWN');assert.equal(answers.second.choice,'UNKNOWN');
   assert.equal(answers.first.diagnostic.diagnosis.reason,'UNKNOWN');assert.equal(answers.second.diagnostic.diagnosis,undefined);
+  assert.equal(answers.first.diagnostic.unknown_reason.code,'UNKNOWN');assert.equal(answers.first.diagnostic.unknown_reason.inferred,false);
+}));
+
+test('lowercase explicit unknown is the only uncertain result that gets a follow-up',async()=>withDiagnosis(async()=>{
+  let calls=0;const lowercase={yes:'Yes',unknown:'Cannot determine'};
+  const result=await chooseDetailed({},'Question',lowercase,{...options,diagnose:true,fetchImpl:async(_url,request)=>{
+    calls++;const body=JSON.parse(request.body);return response(body,id=>({choice:id==='decision'?'unknown':'MISSING_EVIDENCE',confidence:1}));
+  }});
+  assert.equal(calls,2);assert.equal(result.answer.choice,'unknown');assert.equal(result.diagnostic.status,'explicit_unknown');
 }));
 
 test('valid decisions and disabled diagnostics retain a single request',async()=>{

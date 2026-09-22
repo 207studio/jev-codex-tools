@@ -221,7 +221,17 @@ test('low confidence retains the actual model observation separately from the op
   assert.equal(result.necessity.choice,'UNKNOWN');assert.equal(result.necessity.confidence,0);
   assert.equal(result.necessity.observed_choice,'SKIP');assert.equal(result.necessity.observed_confidence,0.52);
   assert.equal(result.necessity.source,'jev');assert.equal(result.necessity.effective,'RUN');
-  assert.deepEqual(result.necessity.diagnostic,{status:'low_confidence',diagnosis:{reason:'LOW_CONFIDENCE',confidence:0.94,request_attempted:true}});
+  assert.equal(result.necessity.diagnostic.unknown_reason.source,'runtime');assert.equal(result.necessity.diagnostic.unknown_reason.inferred,false);
+});
+
+test('low-confidence UNKNOWN remains a runtime boundary before explicit unknown handling', async t => {
+  const {spec,stateDir}=await fixture(t);let calls=0;
+  const result=await planVerification({...spec,mandatory:true},{stateDir,isEnabled:enabled,decide:async(_s,_i,_c,options)=>{
+    calls++;options.onDiagnostic({status:'explicit_unknown',diagnosis:{reason:'MISSING_EVIDENCE',confidence:1,request_attempted:true}});
+    return {choice:'UNKNOWN',confidence:0.5};
+  }});
+  assert.equal(calls,1);assert.equal(result.necessity.diagnostic.status,'low_confidence');
+  assert.equal(result.necessity.diagnostic.unknown_reason.code,'LOW_CONFIDENCE');assert.equal(result.necessity.diagnostic.unknown_reason.source,'runtime');
 });
 
 test('explicit UNKNOWN retains its confidence and diagnosis through a plan/run cache hit', async t => {
@@ -247,8 +257,7 @@ test('callback errors and thrown provider failures never expose their exception 
     throw Error(secret);
   }});
   assert.equal(reported.necessity.source,'fallback');assert.equal(reported.necessity.reason,'http_error');
-  assert.deepEqual(reported.necessity.diagnostic,{status:'http_error',http_status:429,
-    diagnosis:{reason:'INPUT_LIMIT',confidence:0.91,request_attempted:false,proposed_option_present:true}});
+  assert.equal(reported.necessity.diagnostic.unknown_reason.code,'HTTP_ERROR');assert.equal(reported.necessity.diagnostic.unknown_reason.source,'runtime');
   assert.ok(!JSON.stringify(reported).includes(secret));
   const broken=await planVerification({...spec,goal:'Malformed diagnostic callback'},{stateDir,isEnabled:enabled,decide:async(_s,_i,_c,options)=>{
     options.onDiagnostic(Object.defineProperty({},'status',{get(){throw Error(secret);}}));
@@ -271,7 +280,7 @@ test('cached diagnostic fields are sanitized again and cannot change required ex
   const result=await planVerification(input,options);
   assert.equal(decisions,1);assert.equal(result.necessity.source,'cache');assert.equal(result.necessity.effective,'RUN');
   assert.equal(result.necessity.confidence,0.96);assert.ok(!JSON.stringify(result).includes('synthetic-cache-secret'));
-  assert.deepEqual(result.necessity.diagnostic,{status:'explicit_unknown',diagnosis:{reason:'MISSING_OPTION',request_attempted:true,proposed_option_present:true}});
+  assert.equal(result.necessity.diagnostic.unknown_reason.code,'UNKNOWN');assert.equal(result.necessity.diagnostic.unknown_reason.inferred,false);
 });
 
 test('assessment distinguishes failed requests, weak observations, and explicit insufficient evidence', async t => {

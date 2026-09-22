@@ -6,6 +6,7 @@ import path from 'node:path';
 import {stateHome} from './paths.mjs';
 import {choose} from './choice.mjs';
 import {enabled} from './features.mjs';
+import {formatUnknownReason} from './unknown-reason.mjs';
 
 const VERSION = 2, SPEC_BYTES = 16384, FILE_BYTES = 1048576, TOTAL_BYTES = 8388608;
 const CACHE_MS = 120000, TAIL_BYTES = 4000, MIN_CONFIDENCE = 0.9;
@@ -36,6 +37,7 @@ function cleanDiagnostic(value) {
       if (typeof diagnosis.request_attempted === 'boolean') result.diagnosis.request_attempted = diagnosis.request_attempted;
       if (diagnosis.proposed_option != null || diagnosis.proposed_option_present === true) result.diagnosis.proposed_option_present = true;
     }
+    if (result.status !== 'decided') result.unknown_reason = formatUnknownReason(result);
     return result;
   } catch { return null; }
 }
@@ -43,9 +45,10 @@ function decisionRecord(answer, choices, diagnostic, failed = false) {
   const observation = observedAnswer(answer, choices) ? {choice:answer.choice, confidence:answer.confidence} : null;
   let detail = cleanDiagnostic(diagnostic) || cleanDiagnostic(answer?.diagnostic);
   if (observation) {
-    const status = ['UNKNOWN','INSUFFICIENT'].includes(observation.choice) ? 'explicit_unknown' : observation.confidence < MIN_CONFIDENCE ? 'low_confidence' : 'decided';
+    const status = observation.confidence < MIN_CONFIDENCE ? 'low_confidence' : ['UNKNOWN','INSUFFICIENT'].includes(observation.choice) ? 'explicit_unknown' : 'decided';
     detail = detail ? {...detail, status} : {status};
   } else if (!detail || detail.status === 'decided') detail = {status:failed ? 'transport_error' : 'invalid_response'};
+  if (detail.status !== 'decided') detail = {...detail, unknown_reason:formatUnknownReason(detail)};
   return {answer:observation, diagnostic:detail};
 }
 function cachedDecision(value, choices) {
