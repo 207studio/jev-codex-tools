@@ -1,0 +1,21 @@
+{
+  "before": {
+    "prompt_text_bytes": 30854,
+    "skill_section_bytes": 22262,
+    "entries": 127
+  },
+  "after": {
+    "prompt_text_bytes": 23106,
+    "skill_section_bytes": 14497,
+    "entries": 127
+  },
+  "same_skill_paths": true,
+  "reduction_percent": 25.1,
+  "tool_output_token_limit": 1000,
+  "skills_max_context_tokens": 3500,
+  "agents_lines": 10,
+  "measurement": "Native local prompt rendering; no model inference or billed-token comparison.",
+  "date": "2026-09-22",
+  "source": "https://learn.chatgpt.com/docs/config-file/config-reference",
+  "skill_selection_accuracy_measured": false
+}
