@@ -30,7 +30,8 @@
     "jev-verify": "bin/jev-verify.mjs",
     "jev-collect": "bin/jev-collect.mjs",
     "jev-visual": "bin/jev-visual.mjs",
-    "jev-conflicts": "bin/jev-conflicts.mjs"
+    "jev-conflicts": "bin/jev-conflicts.mjs",
+    "jev-workflow": "bin/jev-workflow.mjs"
   },
   "scripts": {
     "test": "node scripts/test.mjs",
