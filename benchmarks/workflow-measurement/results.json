@@ -1,0 +1,526 @@
+{
+  "manifest_sha256": "6877e881d34bd8942c609fe0ca81843adb2c71060eb626dfca45dc87652b4677",
+  "missing_runs": [],
+  "groups": {
+    "A": {
+      "runs": 2,
+      "exit_success": 2,
+      "scores": {
+        "correct": 12,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "metrics": {
+        "input_tokens": {
+          "mean": 18975,
+          "min": 18975,
+          "max": 18975,
+          "sum": 37950
+        },
+        "cached_input_tokens": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "sum": 0
+        },
+        "uncached_input_tokens": {
+          "mean": 18975,
+          "min": 18975,
+          "max": 18975,
+          "sum": 37950
+        },
+        "output_tokens": {
+          "mean": 92.5,
+          "min": 87,
+          "max": 98,
+          "sum": 185
+        },
+        "reasoning_output_tokens": {
+          "mean": 45.5,
+          "min": 40,
+          "max": 51,
+          "sum": 91
+        },
+        "astra_seconds": {
+          "mean": 7.679,
+          "min": 7.635,
+          "max": 7.723,
+          "sum": 15.358
+        },
+        "prompt_bytes": {
+          "mean": 2686,
+          "min": 2686,
+          "max": 2686,
+          "sum": 5372
+        },
+        "preprocess_ms": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "sum": 0
+        }
+      },
+      "jev_requests": 0,
+      "jev_input_tokens": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "sum": 0
+      },
+      "jev_output_tokens": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "sum": 0
+      }
+    },
+    "B": {
+      "runs": 2,
+      "exit_success": 2,
+      "scores": {
+        "correct": 8,
+        "wrong": 0,
+        "unknown": 4,
+        "malformed": 0
+      },
+      "metrics": {
+        "input_tokens": {
+          "mean": 18698,
+          "min": 18698,
+          "max": 18698,
+          "sum": 37396
+        },
+        "cached_input_tokens": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "sum": 0
+        },
+        "uncached_input_tokens": {
+          "mean": 18698,
+          "min": 18698,
+          "max": 18698,
+          "sum": 37396
+        },
+        "output_tokens": {
+          "mean": 66.5,
+          "min": 58,
+          "max": 75,
+          "sum": 133
+        },
+        "reasoning_output_tokens": {
+          "mean": 26.5,
+          "min": 18,
+          "max": 35,
+          "sum": 53
+        },
+        "astra_seconds": {
+          "mean": 7.1645,
+          "min": 7.115,
+          "max": 7.214,
+          "sum": 14.329
+        },
+        "prompt_bytes": {
+          "mean": 1483,
+          "min": 1483,
+          "max": 1483,
+          "sum": 2966
+        },
+        "preprocess_ms": {
+          "mean": 0.16243700000001127,
+          "min": 0.10758300000009058,
+          "max": 0.21729099999993196,
+          "sum": 0.32487400000002253
+        }
+      },
+      "jev_requests": 0,
+      "jev_input_tokens": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "sum": 0
+      },
+      "jev_output_tokens": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "sum": 0
+      }
+    },
+    "C": {
+      "runs": 2,
+      "exit_success": 2,
+      "scores": {
+        "correct": 12,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "metrics": {
+        "input_tokens": {
+          "mean": 18705,
+          "min": 18705,
+          "max": 18705,
+          "sum": 37410
+        },
+        "cached_input_tokens": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "sum": 0
+        },
+        "uncached_input_tokens": {
+          "mean": 18705,
+          "min": 18705,
+          "max": 18705,
+          "sum": 37410
+        },
+        "output_tokens": {
+          "mean": 54.5,
+          "min": 45,
+          "max": 64,
+          "sum": 109
+        },
+        "reasoning_output_tokens": {
+          "mean": 8.5,
+          "min": 0,
+          "max": 17,
+          "sum": 17
+        },
+        "astra_seconds": {
+          "mean": 6.7524999999999995,
+          "min": 5.874,
+          "max": 7.631,
+          "sum": 13.504999999999999
+        },
+        "prompt_bytes": {
+          "mean": 1495,
+          "min": 1495,
+          "max": 1495,
+          "sum": 2990
+        },
+        "preprocess_ms": {
+          "mean": 738.0494795,
+          "min": 574.710625,
+          "max": 901.388334,
+          "sum": 1476.098959
+        }
+      },
+      "jev_requests": 4,
+      "jev_input_tokens": {
+        "mean": 938,
+        "min": 938,
+        "max": 938,
+        "sum": 1876
+      },
+      "jev_output_tokens": {
+        "mean": 109,
+        "min": 109,
+        "max": 109,
+        "sum": 218
+      }
+    }
+  },
+  "comparisons": {
+    "B_vs_A": {
+      "input_tokens_reduction_percent": 1.4598155467720697,
+      "cached_input_tokens_reduction_percent": null,
+      "uncached_input_tokens_reduction_percent": 1.4598155467720697,
+      "output_tokens_reduction_percent": 28.10810810810811,
+      "reasoning_output_tokens_reduction_percent": 41.75824175824175,
+      "astra_seconds_reduction_percent": 6.7000911577028255,
+      "prompt_bytes_reduction_percent": 44.78778853313477,
+      "preprocess_ms_reduction_percent": null
+    },
+    "C_vs_A": {
+      "input_tokens_reduction_percent": 1.4229249011857736,
+      "cached_input_tokens_reduction_percent": null,
+      "uncached_input_tokens_reduction_percent": 1.4229249011857736,
+      "output_tokens_reduction_percent": 41.08108108108108,
+      "reasoning_output_tokens_reduction_percent": 81.31868131868131,
+      "astra_seconds_reduction_percent": 12.065373095455145,
+      "prompt_bytes_reduction_percent": 44.34102755026061,
+      "preprocess_ms_reduction_percent": null
+    }
+  },
+  "runs": [
+    {
+      "run": "A1",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 2686,
+      "input_tokens": 18975,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18975,
+      "output_tokens": 87,
+      "reasoning_output_tokens": 40,
+      "astra_seconds": 7.723,
+      "preprocess_ms": 0,
+      "jev_requests": 0,
+      "jev_provider": [],
+      "warm_additional_requests": null,
+      "scores": {
+        "correct": 6,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "CHILD_PROCEDURE",
+        "sequential": "MAIN_SCOPED"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "e9e6d3a20b14419c9066562a4eaa3d5399fd82bc395e253c78d074372cd261f2",
+      "prompt_sha256": "216c5b09122d96246a496b737487fd8ccfe858a580eb8c14914c892c79e77e2d"
+    },
+    {
+      "run": "B1",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 1483,
+      "input_tokens": 18698,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18698,
+      "output_tokens": 75,
+      "reasoning_output_tokens": 35,
+      "astra_seconds": 7.214,
+      "preprocess_ms": 0.10758300000009058,
+      "jev_requests": 0,
+      "jev_provider": [],
+      "warm_additional_requests": null,
+      "scores": {
+        "correct": 4,
+        "wrong": 0,
+        "unknown": 2,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "UNKNOWN",
+        "sequential": "UNKNOWN"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "25eb2261ec68c267fe5daa97f0113a6fc0b89c4f8c1eb399005c462a5c059b3b",
+      "prompt_sha256": "f70a02faca5c49f1b1c62b736335bfe60a28c11d26f4e2496cd2be11460ae7e9"
+    },
+    {
+      "run": "C1",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 1495,
+      "input_tokens": 18705,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18705,
+      "output_tokens": 64,
+      "reasoning_output_tokens": 17,
+      "astra_seconds": 7.631,
+      "preprocess_ms": 901.388334,
+      "jev_requests": 2,
+      "jev_provider": [
+        {
+          "model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 504,
+            "output_tokens": 72
+          }
+        },
+        {
+          "model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 434,
+            "output_tokens": 37
+          }
+        }
+      ],
+      "warm_additional_requests": 0,
+      "scores": {
+        "correct": 6,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "CHILD_PROCEDURE",
+        "sequential": "MAIN_SCOPED"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "f672ed36687d0a6013b217b163377f52134bb260a596235abb819b929653f2d9",
+      "prompt_sha256": "e34f48e5bac25552dec4fbe99b6706da798035cfcfdb0b2ff63485b3833d070f"
+    },
+    {
+      "run": "C2",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 1495,
+      "input_tokens": 18705,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18705,
+      "output_tokens": 45,
+      "reasoning_output_tokens": 0,
+      "astra_seconds": 5.874,
+      "preprocess_ms": 574.710625,
+      "jev_requests": 2,
+      "jev_provider": [
+        {
+          "model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 504,
+            "output_tokens": 72
+          }
+        },
+        {
+          "model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 434,
+            "output_tokens": 37
+          }
+        }
+      ],
+      "warm_additional_requests": 0,
+      "scores": {
+        "correct": 6,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "CHILD_PROCEDURE",
+        "sequential": "MAIN_SCOPED"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "539e257a1479bf8f47a15c2b00170182d888abad61e4dd8fad06320830f0a765",
+      "prompt_sha256": "e34f48e5bac25552dec4fbe99b6706da798035cfcfdb0b2ff63485b3833d070f"
+    },
+    {
+      "run": "B2",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 1483,
+      "input_tokens": 18698,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18698,
+      "output_tokens": 58,
+      "reasoning_output_tokens": 18,
+      "astra_seconds": 7.115,
+      "preprocess_ms": 0.21729099999993196,
+      "jev_requests": 0,
+      "jev_provider": [],
+      "warm_additional_requests": null,
+      "scores": {
+        "correct": 4,
+        "wrong": 0,
+        "unknown": 2,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "UNKNOWN",
+        "sequential": "UNKNOWN"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "296ff129b61826e861a7963c11360b39cb2867272c4f31379898db124da5eb56",
+      "prompt_sha256": "f70a02faca5c49f1b1c62b736335bfe60a28c11d26f4e2496cd2be11460ae7e9"
+    },
+    {
+      "run": "A2",
+      "exit": 0,
+      "timeout": false,
+      "completed_turns": 1,
+      "prompt_bytes": 2686,
+      "input_tokens": 18975,
+      "cached_input_tokens": 0,
+      "uncached_input_tokens": 18975,
+      "output_tokens": 98,
+      "reasoning_output_tokens": 51,
+      "astra_seconds": 7.635,
+      "preprocess_ms": 0,
+      "jev_requests": 0,
+      "jev_provider": [],
+      "warm_additional_requests": null,
+      "scores": {
+        "correct": 6,
+        "wrong": 0,
+        "unknown": 0,
+        "malformed": 0
+      },
+      "predictions": {
+        "lookup": "MAIN_DIRECT",
+        "edit": "MAIN_DIRECT",
+        "debug": "MAIN_SCOPED",
+        "batch": "BATCH_JEV",
+        "parallel": "CHILD_PROCEDURE",
+        "sequential": "MAIN_SCOPED"
+      },
+      "event_types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "tool_items": 0,
+      "events_sha256": "5265d3337fa559e0d80ed38f4ded4c39b9091a8d7cb3837349aa6b4c17e4f0a2",
+      "prompt_sha256": "216c5b09122d96246a496b737487fd8ccfe858a580eb8c14914c892c79e77e2d"
+    }
+  ],
+  "interpretation_limits": [
+    "Six constructed routing cases repeated twice; not independent task samples",
+    "Treatment supplies precomputed routes; no implementation or task execution measured",
+    "Astra cache state uncontrolled; raw input reductions do not equal quota or money saved",
+    "Jev token counts and benchmark setup overhead are separate",
+    "Code-only UNKNOWN is not a correct answer"
+  ]
+}

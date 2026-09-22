@@ -10,6 +10,8 @@ Independent community project. Not an official OpenAI or TypeSafe product. Jev r
 
 ## Measured findings
 
+The newer [workflow routing measurement](docs/WORKFLOW_MEASUREMENT.md) found **1.4% lower Astra input and 41.1% lower Astra output**, while unweighted token counts across Astra and Jev **increased 3.9%**. This is six synthetic routing cases repeated twice, not end-to-end coding or billing evidence; code-only results include UNKNOWN. Fixtures, all runs and limitations are published alongside the report.
+
 [한국어 조사 결과](docs/TOKEN_SAVINGS_FINDINGS.md) brings together the bounded Jev pilot, native input budgets, exact fixtures and limitations. Input-token usage and rendered text bytes are reported separately.
 
 ## What's included

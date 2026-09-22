@@ -40,4 +40,6 @@ The one-time review used 11 requests, 5,959 input tokens and 562 output tokens. 
 
 ## Local Codex policy
 
+A subsequent [routing microbenchmark](WORKFLOW_MEASUREMENT.md) measured the next Astra reporting turn with raw metadata versus precomputed advice. It found only 1.4% lower Astra input and higher combined provider token counts. It does not establish end-to-end task accuracy or general savings.
+
 Keep the always-loaded policy short: direct known work, batch repeated semantics, minimal child context, required checks once. Put this reference behind an on-demand link. Existing runtime integrations can invoke `node /absolute/codex-token-tools/integration/workflow-cli.mjs` without replacing the shared Jev Mode installation or adding a blanket hook.

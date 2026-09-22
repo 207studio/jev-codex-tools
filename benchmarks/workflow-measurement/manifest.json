@@ -1,0 +1,45 @@
+{
+  "started_unix": 1790072540.65628,
+  "order": [
+    "A1",
+    "B1",
+    "C1",
+    "C2",
+    "B2",
+    "A2"
+  ],
+  "cli_flags": [
+    "exec",
+    "--json",
+    "--ephemeral",
+    "--ignore-user-config",
+    "-c",
+    "project_doc_max_bytes=0",
+    "-c",
+    "model_reasoning_effort=\"ultra\"",
+    "-c",
+    "tool_output_token_limit=1000",
+    "-m",
+    "gpt-6-astra",
+    "-s",
+    "read-only",
+    "--skip-git-repo-check"
+  ],
+  "files": {
+    "run.py": "f26436698c73609139cac255086106cae4c43856a5ef1647572b1ad35348719a",
+    "expected.json": "df71591fc6bd3682db649aa65c17907f1dbe85e332533be9b869ac54db1096ce",
+    "prompt.txt": "562fad26a6626f391cb65652523ead76e72ebbfa666d314bd781fe461728756e",
+    "cases.json": "93f6534fdc8044ae9ef584dfa148b67809c6bec4bac92f381cf635b420c675e6",
+    "preprocess.mjs": "46c84aea5ae030cf01acfb29090a04abb34a52894b2402cae393430bff5582d4",
+    "PROTOCOL.md": "cead594211a8ac5c16ee3c836d2dec9fa0acf827cbc053c414c4793a9226c097"
+  },
+  "runtime_files": {
+    "workflow-policy.mjs": "66abbaf561bc48a3d271162aad05e503141e940870928abd913b1511a3df07e8",
+    "workflow-cli.mjs": "d10b839d278634a109fdd7e8f255ccdb71294330ef3887cb3f80b8a44d41cea4",
+    "choice.mjs": "24fe45cd639037d18428b787cc8beb309f399dcf93530ff0d3d45cac177efd46"
+  },
+  "codex_sha256": "9280c0754e8f1f6b72f495d30c8c82a006dbc4995bf0492916fa0901f6bfd1f9",
+  "node_version": "v24.15.0",
+  "codex_version": "codex-cli 0.155.0-alpha.9.2",
+  "started_utc": "2026-09-22T10:22:20.656280+00:00"
+}
