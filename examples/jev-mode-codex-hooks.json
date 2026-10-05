@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [{"hooks": [{"type": "command", "command": "JEV_MODE_CONFIG=\"$HOME/.codex/jev-mode.json\" \"$HOME/.local/bin/jev-mode\" hook --event SessionStart", "timeout": 5, "statusMessage": "Jev 배치 판단 지침"}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "JEV_MODE_CONFIG=\"$HOME/.codex/jev-mode.json\" \"$HOME/.local/bin/jev-mode\" hook --event UserPromptSubmit", "timeout": 5, "statusMessage": "Jev 배치 판단 범위 안내"}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "JEV_MODE_CONFIG=\"$HOME/.codex/jev-mode.json\" \"$HOME/.local/bin/jev-mode\" hook --event SubagentStart", "timeout": 5, "statusMessage": "하위 에이전트 Jev 판단 지침"}]}]
+  }
+}
