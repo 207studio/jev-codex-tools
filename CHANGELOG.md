@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Scope the Codex-only Aside skill to browser work, keeping local development and verification in Codex; preserve the shared skill, hooks and legitimate browser integrations.
+
 - Publish a frozen A/code-only/code+Jev routing microbenchmark and Korean draft: small Astra input savings, reduced Astra output, and increased unweighted cross-provider token totals. Include UNKNOWN, all six runs and measurement limitations.
 
 - Add optional `jev-workflow` advice: code handles known routes, Jev handles ambiguous mixed metadata once, and identical saved plans are reused without another request. Preserve explicit models, uncertainty, native approvals and required verification.
