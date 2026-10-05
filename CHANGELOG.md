@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Scope the Codex-only Aside skill to browser work, keeping local development and verification in Codex; preserve the shared skill, hooks and legitimate browser integrations.
+
+- Publish a frozen A/code-only/code+Jev routing microbenchmark and Korean draft: small Astra input savings, reduced Astra output, and increased unweighted cross-provider token totals. Include UNKNOWN, all six runs and measurement limitations.
+
+- Add optional `jev-workflow` advice: code handles known routes, Jev handles ambiguous mixed metadata once, and identical saved plans are reused without another request. Preserve explicit models, uncertainty, native approvals and required verification.
+
+- Explain UNKNOWN outcomes with bounded Korean cause/action metadata; handle runtime failures and low confidence locally, and permit only one opt-in reason-only follow-up for explicit uncertainty. Preserve original verdicts, exit codes and cache provenance.
+- Publish exact synthetic bulk-offload fixtures and a one-pair token comparison with separate Jev usage, caching limitations and an additional abstention; tighten raw-input policy without claiming universal read interception.
+
 - Add an opt-in parser-backed recovery fast path that records policy handling without claiming Jev coverage or granting approval; avoid unused tool-classification diagnosis.
 - Scope four skill triggers, move workflow details to on-demand references, shorten the child reminder and document a reversible selective-use profile without changing native permissions or the shared Jev Mode CLI.
 

@@ -6,7 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {enabled} from './integration/features.mjs';
 import {chooseMany} from './integration/choice.mjs';
-import {diagnoseUnknown} from './integration/unknown-diagnosis.mjs';
+import {diagnoseUnknownReason} from './integration/unknown-diagnosis.mjs';
+import {formatUnknownReason} from './integration/unknown-reason.mjs';
 
 const VERSION = '2';
 const MAX_BYTES = 65536;
@@ -17,7 +18,7 @@ const diagnosisReasons = new Set(['MISSING_EVIDENCE', 'AMBIGUOUS_QUESTION', 'CON
   'MISSING_OPTION', 'LOW_CONFIDENCE', 'UNKNOWN', 'INPUT_WITHHELD', 'INPUT_LIMIT']);
 const errorCodes = new Set(['INVALID_INPUT', 'CREDENTIAL_FILE_REJECTED', 'NARROW_INPUT_FIRST', 'TEXT_INPUT_REQUIRED',
   'CACHE_READ_FAILED', 'CACHE_WRITE_FAILED', 'MISSING_KEY', 'REQUEST_FAILED', 'INVALID_RESPONSE', 'INVALID_MODEL',
-  'HTTP_ERROR', 'LOCAL_IO_OR_ARGUMENT_ERROR']);
+  'HTTP_ERROR', 'REQUEST_TIMEOUT', 'LOCAL_IO_OR_ARGUMENT_ERROR']);
 const fixedErrorCode = error => errorCodes.has(error?.safeCode) || /^HTTP_[1-5]\d{2}$/.test(error?.safeCode || '')
   ? error.safeCode : 'LOCAL_IO_OR_ARGUMENT_ERROR';
 
@@ -28,14 +29,25 @@ function diagnosisSummary(value) {
     proposed_option_present:Boolean(value.proposed_option || value.proposed_option_present === true)};
 }
 
-function decisionResult(answer, minConfidence, source, apiCalls, extra = {}) {
-  return {decision:answer.confidence >= minConfidence ? answer.choice : 'UNKNOWN', source, apiCalls,
-    observed_choice:answer.choice, observed_confidence:answer.confidence,
-    reason:answer.confidence < minConfidence ? 'LOW_CONFIDENCE' : answer.choice === 'UNKNOWN' ? 'EXPLICIT_UNKNOWN' : 'DECIDED',
-    diagnosis:null, ...extra};
+function withUnknownReason(output) {
+  if (output.decision !== 'UNKNOWN') return output;
+  const status = {
+    LOW_CONFIDENCE:'low_confidence', EXPLICIT_UNKNOWN:'explicit_unknown', MISSING_KEY:'missing_key',
+    REQUEST_FAILED:'transport_error', REQUEST_TIMEOUT:'timeout', INVALID_RESPONSE:'invalid_response',
+    INVALID_MODEL:'invalid_model', INVALID_INPUT:'invalid_request', NARROW_INPUT_FIRST:'request_too_large',
+    TEXT_INPUT_REQUIRED:'invalid_request', CREDENTIAL_FILE_REJECTED:'input_withheld',
+  }[output.reason] || (/^HTTP_/.test(output.reason) ? 'http_error' : output.reason);
+  return {...output, unknown_reason:formatUnknownReason({status, diagnosis:output.diagnosis})};
 }
 
-const unavailableResult = (source, reason) => ({decision:'UNKNOWN', source, apiCalls:0,
+function decisionResult(answer, minConfidence, source, apiCalls, extra = {}) {
+  return withUnknownReason({decision:answer.confidence >= minConfidence ? answer.choice : 'UNKNOWN', source, apiCalls,
+    observed_choice:answer.choice, observed_confidence:answer.confidence,
+    reason:answer.confidence < minConfidence ? 'LOW_CONFIDENCE' : answer.choice === 'UNKNOWN' ? 'EXPLICIT_UNKNOWN' : 'DECIDED',
+    diagnosis:null, ...extra});
+}
+
+const unavailableResult = (source, reason) => withUnknownReason({decision:'UNKNOWN', source, apiCalls:0,
   observed_choice:null, observed_confidence:null, reason, diagnosis:null});
 
 export function validate(answer) {
@@ -106,7 +118,7 @@ export async function judge({file, question, cacheDir = process.env.JEV_JUDGE_CA
     response = await countedFetch('https://api.typesafe.ai/v1/systemone', {method:'POST',
       headers:{Authorization:`Bearer ${key}`, 'Content-Type':'application/json'},
       body:JSON.stringify(body), signal:AbortSignal.timeout(15000)});
-  } catch { throw safeError('REQUEST_FAILED', apiCalls); }
+  } catch (error) { throw safeError(['TimeoutError','AbortError'].includes(error?.name) ? 'REQUEST_TIMEOUT' : 'REQUEST_FAILED', apiCalls); }
   if (!response?.ok) throw safeError(Number.isInteger(response?.status) && response.status >= 100 && response.status <= 599
     ? `HTTP_${response.status}` : 'HTTP_ERROR', apiCalls);
   let data;
@@ -117,9 +129,9 @@ export async function judge({file, question, cacheDir = process.env.JEV_JUDGE_CA
   const usage = data.usage && ['input_tokens','output_tokens'].every(k => Number.isSafeInteger(data.usage[k]) && data.usage[k] >= 0)
     ? {input_tokens:data.usage.input_tokens, output_tokens:data.usage.output_tokens} : null;
   let diagnosis = null;
-  if ((answer.choice === 'UNKNOWN' || answer.confidence < minConfidence) && isEnabled('unknown_diagnostics')) {
+  if (answer.choice === 'UNKNOWN' && answer.confidence >= minConfidence && isEnabled('unknown_diagnostics')) {
     // The diagnostic uses the question text; the primary request and answer remain unchanged.
-    diagnosis = await diagnoseUnknown({state:body.state,
+    diagnosis = await diagnoseUnknownReason({state:body.state,
       instructions:question, criteria:body.questions.decision.criteria, answer},
     {decideMany:(state, questions, {timeout}) => chooseMany(state, questions,
       {diagnose:false, key, fetchImpl:countedFetch, timeout})});
@@ -148,12 +160,15 @@ export async function runCli(argv, overrides = {}) {
     if (values.help) return {stdout:'jev-judge --file FILE --question "yes/no question" [--no-cache] [--ttl-seconds 0..3600] [--details]\nstdout: YES|NO|UNKNOWN (or JSON with --details); exit: 0=decided, 3=unknown, 2=error. No actions are executed.', stderr:'', exitCode:0};
     const output = await judge({file:values.file, question:values.question, noCache:values['no-cache'],
       ttl:values['ttl-seconds'] === undefined ? 900 : Number(values['ttl-seconds']), ...overrides});
-    return {stdout:details ? JSON.stringify(output) : output.decision, stderr:'', exitCode:output.decision === 'UNKNOWN' ? 3 : 0};
+    return {stdout:details ? JSON.stringify(output) : output.decision,
+      stderr:!details && output.unknown_reason ? output.unknown_reason.display : '',
+      exitCode:output.decision === 'UNKNOWN' ? 3 : 0};
   } catch (error) {
     const reason = fixedErrorCode(error);
     const output = {...unavailableResult('error', reason),
       apiCalls:Number.isSafeInteger(error?.apiCalls) && error.apiCalls >= 0 ? error.apiCalls : 0};
-    return {stdout:details ? JSON.stringify(output) : 'UNKNOWN', stderr:reason, exitCode:2};
+    return {stdout:details ? JSON.stringify(output) : 'UNKNOWN',
+      stderr:details ? reason : `${reason}: ${output.unknown_reason.display}`, exitCode:2};
   }
 }
 

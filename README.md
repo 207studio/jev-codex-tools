@@ -4,9 +4,19 @@ Experimental, opt-in tools from **207 Studio** that use TypeSafe Jev for bounded
 
 The goal is to avoid repeatedly sending unnecessary logs, conversation excerpts, and UI observations to a general coding model. **This repository does not yet establish a general token-saving percentage.** It does not replace Codex, native conversation compaction, or the host's approval system.
 
+A [single-pair synthetic comparison](docs/TOKEN_COMPARISON_20260922.md) recorded less Codex input with bulk offload, but one additional abstention; it does not establish accuracy parity. [Input policy](docs/INPUT_POLICY.md) keeps bulk raw text outside the model and preserves necessary evidence. [UNKNOWN explanations](docs/UNKNOWN_DIAGNOSTICS.md) retain the original verdict and label inferred causes.
+
 Independent community project. Not an official OpenAI or TypeSafe product. Jev remains an external service with its own terms and pricing.
 
+## Measured findings
+
+The newer [workflow routing measurement](docs/WORKFLOW_MEASUREMENT.md) found **1.4% lower Astra input and 41.1% lower Astra output**, while unweighted token counts across Astra and Jev **increased 3.9%**. This is six synthetic routing cases repeated twice, not end-to-end coding or billing evidence; code-only results include UNKNOWN. Fixtures, all runs and limitations are published alongside the report.
+
+[한국어 조사 결과](docs/TOKEN_SAVINGS_FINDINGS.md) brings together the bounded Jev pilot, native input budgets, exact fixtures and limitations. Input-token usage and rendered text bytes are reported separately.
+
 ## What's included
+
+- [Bounded workflow advice](docs/WORKFLOW_POLICY.md): avoid extra Jev decisions for known work, ask once for ambiguous mixed tasks, and reuse an unchanged plan. No additional per-tool hook.
 
 | Tool | Purpose | Boundary |
 |---|---|---|
