@@ -9,6 +9,9 @@ import {parseShellCommand} from './verification-enforcement.mjs';
 const VERSION=1, LIMIT=65536, TTL=120000;
 const UI_EXT=/\.(swift|tsx|jsx|html|css|scss|storyboard|xib|qml|vue|svelte)$/i;
 const SHELL=new Set(['Bash','exec_command','shell','shell_command']);
+// Registered GPT image-generation tool names only; never infer this exemption
+// from a leaf name, tool arguments, prompts, or wrapper code.
+const GPT_IMAGE_GENERATORS=new Set(['image_gen__imagegen','image_gen.imagegen']);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=()=>{throw Error('visual_metadata_unavailable');};
 const own=(value,key)=>{
@@ -221,6 +224,7 @@ export async function visualDecision(event,{active=false,decide=choose,stateDir=
   let metadata,result,time;
   try{
     if(own(event,'hook_event_name')!=='PreToolUse' || trustedCall(event,trustedExecutables))return empty();
+    if(GPT_IMAGE_GENERATORS.has(toolOf(event)))return {...empty(),source:'gpt_image_generation_exempt'};
     const analysis=analyze(event);
     if(!analysis)return empty();
     metadata=analysis.metadata;

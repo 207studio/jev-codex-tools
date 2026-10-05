@@ -41,7 +41,7 @@ test('does not claim coverage of indirect scripts, generic reads or nonvisual pa
 
 test('each visual kind requests its allowed routing choices without approving execution',async t=>{
   const options=await fixture(t),seen=[];
-  for(const [tool,input,choice] of [['view_image',{path:'image.png'},'MEASURE_FIRST'],['write_file',{path:'view.tsx',content:'private'},'CODE_REQUIRED'],['image_gen__imagegen',{prompt:'private'},'GENERATOR_REQUIRED']]){
+  for(const [tool,input,choice] of [['view_image',{path:'image.png'},'MEASURE_FIRST'],['write_file',{path:'view.tsx',content:'private'},'CODE_REQUIRED'],['mcp__other__generate_image',{prompt:'private'},'GENERATOR_REQUIRED']]){
     const result=await visualDecision(event(tool,input),{...options,decide:async(state,instructions,criteria,requestOptions)=>{
       seen.push(state);assert.deepEqual(requestOptions,{timeout:1800,retries:0});assert.ok(Object.hasOwn(criteria,choice));
       assert.match(instructions,/does not skip execution/);return answer(choice);
@@ -49,6 +49,43 @@ test('each visual kind requests its allowed routing choices without approving ex
     assert.equal(result.completed,true);assert.equal(result.choice,choice);assert.equal(result.hookOutput,null);
   }
   assert.equal(seen.length,3);
+});
+
+test('registered GPT image generation skips only the visual routing decision',async t=>{
+  const options=await fixture(t);let calls=0,getters=0;
+  const input={};Object.defineProperty(input,'prompt',{enumerable:true,get(){getters++;throw Error('must not read');}});
+  for(const tool of ['image_gen__imagegen','image_gen.imagegen']){
+    const result=await visualDecision(event(tool,input),{...options,decide:async()=>{calls++;throw Error('visual unavailable');}});
+    assert.equal(result.covered,false);assert.equal(result.completed,false);
+    assert.equal(result.hookOutput,null);assert.equal(result.fingerprint,null);
+    assert.equal(result.source,'gpt_image_generation_exempt');
+  }
+  assert.equal(calls,0);assert.equal(getters,0);assert.deepEqual(await readdir(options.stateDir),[]);
+});
+
+test('image generation exemption cannot be widened by names, arguments or wrapper code',async t=>{
+  const options=await fixture(t);let calls=0;
+  const items=[
+    ...['imagegen','mcp__other__imagegen','mcp__image_gen__imagegen','tools.image_gen__imagegen','image_gen__imagegen_extra','IMAGE_GEN__IMAGEGEN']
+      .map(tool=>event(tool,{prompt:'image_gen__imagegen'})),
+    event('view_image',{path:'image_gen__imagegen.png',tool_name:'image_gen__imagegen'}),
+    event('mcp__browser__screenshot',{prompt:'image_gen.imagegen'}),
+    event('mcp__cua_repl__js',{code:'await tab.screenshot(); // tools.image_gen__imagegen'}),
+    event('exec_command',{cmd:'xcrun simctl io booted screenshot imagegen.png'}),
+    event('write_file',{path:'imagegen.swift',content:'image_gen__imagegen'})
+  ];
+  for(const item of items){
+    const result=await visualDecision(item,{...options,decide:async()=>{calls++;throw Error('visual unavailable');}});
+    assert.equal(result.covered,true,item.tool_name);assert.equal(isDenied(result),true,item.tool_name);
+  }
+  assert.equal(calls,items.length);
+});
+
+test('GPT image generation keeps observed execution separate from unperformed pixel review',async t=>{
+  const options=await fixture(t);
+  const result=await recordVisualExecution(event('image_gen__imagegen',{prompt:'synthetic asset'},{hook_event_name:'PostToolUse'}),options);
+  assert.equal(result.covered,true);assert.equal(result.recorded,true);
+  assert.equal(result.pixel_review,'NOT_PERFORMED');assert.equal(result.quality_verdict,'NOT_ASSESSED');
 });
 
 test('outbound state, cache and audit contain no paths, prompts, code, image or output bodies',async t=>{

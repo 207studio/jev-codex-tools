@@ -1,0 +1,10 @@
+{
+  "context_id": "example-task-1-revision-1",
+  "kind": "edit",
+  "scope_known": true,
+  "role": "implementation",
+  "semantic_items": 0,
+  "independent_units": 1,
+  "parallel_benefit": false,
+  "goal": "Update one known documentation setting."
+}

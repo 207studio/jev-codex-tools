@@ -1,0 +1,89 @@
+{
+  "date": "2026-09-22",
+  "purpose": "One-time method-boundary review, not proof of token savings or accuracy",
+  "items": 6,
+  "requests": 11,
+  "input_tokens": 5959,
+  "output_tokens": 562,
+  "final_results": [
+    {
+      "id": "direct_lookup",
+      "choice": "ADOPT",
+      "confidence": 0.99,
+      "pass": 2
+    },
+    {
+      "id": "role_fastpath",
+      "choice": "ADOPT",
+      "confidence": 0.99,
+      "pass": 2
+    },
+    {
+      "id": "verification_reuse",
+      "choice": "ADOPT",
+      "confidence": 0.81,
+      "pass": 1
+    },
+    {
+      "id": "bulk_offload",
+      "choice": "ADOPT",
+      "confidence": 0.99,
+      "pass": 2
+    },
+    {
+      "id": "bounded_advisor",
+      "choice": "ADOPT",
+      "confidence": 0.99,
+      "pass": 2
+    },
+    {
+      "id": "plan_reuse",
+      "choice": "ADOPT",
+      "confidence": 1.0,
+      "pass": 2
+    }
+  ],
+  "local_smoke": [
+    {
+      "case": "lookup",
+      "exit": 0,
+      "strategy": "MAIN_DIRECT",
+      "source": "policy",
+      "confidence": null,
+      "reason": "KNOWN_LOOKUP",
+      "api_calls": 0,
+      "cache_hit": false
+    },
+    {
+      "case": "mixed",
+      "exit": 0,
+      "strategy": "MAIN_SCOPED",
+      "source": "jev",
+      "confidence": 1,
+      "reason": "DECIDED",
+      "api_calls": 1,
+      "cache_hit": false
+    },
+    {
+      "case": "reuse",
+      "exit": 0,
+      "strategy": "MAIN_SCOPED",
+      "source": "jev",
+      "confidence": 1,
+      "reason": "DECIDED",
+      "api_calls": 0,
+      "cache_hit": true
+    }
+  ],
+  "synthetic_tests": {
+    "workflow": 17,
+    "total": 284,
+    "failed": 0
+  },
+  "limitations": [
+    "Synthetic methods and local smoke only",
+    "Jev confidence is advisory, not independently calibrated here",
+    "text_tokens is not measured Codex ingress",
+    "No task-success or token-savings benchmark for this feature"
+  ]
+}

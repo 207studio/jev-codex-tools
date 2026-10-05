@@ -1,20 +1,11 @@
 ---
 name: jev-verify
-description: Ask Jev whether a proposed verification is necessary before running it, then classify bounded evidence separately from the real command exit status. Use to avoid optional repeated tests or inspections.
+description: Decide whether an optional repeated verification is worth running.
 ---
 
-Define the question, affected files, proposed command, and whether a check is required by the user, project, or safety constraints in a small spec. Use the existing spec when its scope is still accurate; do not perform broad exploration just to fill it. Never mark a required check optional to obtain SKIP.
+# 선택적 재검증 판단
 
-Group related checks into one bounded plan. Ordinary parsing, exit-code reads, hashes, and cache reads are code operations, not new semantic verification tasks that each need another model request.
-
-Run `jev-verify plan --spec FILE` before attempting verification. Jev selects RUN, NARROW, SKIP, or UNKNOWN. Code prevents SKIP for mandatory checks, new failures, high/normal risk, or incomplete file scope. Treat the declared file scope as a caller assertion, not automatic dependency discovery.
-
-Run an authorized command with `jev-verify run --spec FILE --execute`. This repeats the gate using the current file fingerprint and reuses eligible cached decisions. NARROW may use only the caller's supplied `narrow_argv`; Jev never invents a command. A SKIP result means not executed, never passed.
-
-When `verification_enforcement` is enabled, use the registered absolute wrapper path. The native shell hook blocks direct checks and unknown scripts; keep work inside the wrapper rather than switching to another interpreter, interactive process, or tool to evade a denial. Exact literal observation commands remain available. This guard does not cover all hosted, browser, or MCP tools.
-
-With `decision_enforcement`, all hook-visible tool calls also obtain a Jev effect classification. A missing response blocks ordinary actions; uncertainty remains UNKNOWN under native policy. Registered Jev judgment/session/UI adapters may be invoked directly by their absolute paths under their own guards. Do not create an extra verification task just to call an already registered Jev adapter. The hook does not replace complex reasoning, code generation, or host safety rules.
-
-The wrapper records the actual exit code and a private full log. Jev separately returns SUPPORTED, CONTRADICTED, or INSUFFICIENT about the goal and bounded evidence. API failure or uncertainty is not a test pass. For an existing log use `jev-verify assess --spec FILE --log LOG --exit-code N`, reporting the original exit code honestly.
-
-After a sufficient relevant check passes, stop unless code/input changes, a new failure, or a required check justifies more work. Never use this decision gate to bypass a host approval, permission boundary, user hold, or required safety validation. Do not forward full logs or repeat cached reasoning to the parent model.
+변경 없는 재검증을 추가로 할지 애매할 때만 쓴다. 필수 검증·첫 관련 테스트·종료코드 확인을 위해 별도 Jev 판단을 만들지 않는다.
+코드·입력 변경, 새 실패, 명시된 요구가 없으면 이미 충분한 검증을 반복하지 않는다.
+선택적 판단이 필요하면 [spec과 실행 흐름](references/verification.md)을 읽는다. 원본 로그·종료코드와 Jev 평가는 구분한다.
+호스트가 강제 경유를 켠 경우에는 등록 wrapper를 사용한다; 차단·승인·필수 검증을 우회하지 않는다.

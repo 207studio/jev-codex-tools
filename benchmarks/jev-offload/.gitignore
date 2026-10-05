@@ -1,0 +1,7 @@
+!items.jsonl
+jev-answers.jsonl
+predictions.jsonl
+jev.stdout.log
+jev.stderr.log
+jev.exit
+__pycache__/

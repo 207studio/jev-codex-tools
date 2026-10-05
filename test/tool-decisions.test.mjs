@@ -16,7 +16,7 @@ const answer = (choice = 'read-only',confidence = 0.99) => ({choice,confidence})
 test('MCP, edit, and agent calls each request an effects classification',async t => {
   const options = await fixture(t),states = [];
   for (const item of [event('mcp__notes__update',{page_id:'page-one',body:'PRIVATE_BODY'}),event('apply_patch','*** Begin Patch\n*** Update File: src/main.mjs\n@@\n+PRIVATE_PATCH_BODY\n*** End Patch'),event('spawn_agent',{message:'PRIVATE_AGENT_PROMPT'})]) {
-    const result = await decideTool(item,{...options,decide:async(state,_instructions,_criteria,requestOptions) => {states.push(state);assert.deepEqual(requestOptions,{timeout:2500,retries:0});return answer('reversible');}});
+    const result = await decideTool(item,{...options,decide:async(state,_instructions,_criteria,requestOptions) => {states.push(state);assert.deepEqual(requestOptions,{timeout:2500,retries:0,diagnose:false});return answer('reversible');}});
     assert.equal(result.covered,true);assert.equal(result.completed,true);assert.equal(result.disposition,'native');
   }
   assert.equal(states.length,3);
@@ -43,6 +43,54 @@ test('cache excludes tool_use_id but invalidates changed original arguments',asy
   const second=await decideTool(event('mcp__files__read',{path:'one'},{tool_use_id:'call-two'}),{...options,decide});
   const changed=await decideTool(event('mcp__files__read',{path:'two'}),{...options,decide});
   assert.equal(calls,2);assert.equal(second.source,'cache');assert.equal(first.fingerprint,second.fingerprint);assert.notEqual(changed.fingerprint,first.fingerprint);
+});
+
+test('bounded shell pipelines expose program metadata without argument values',async t=>{
+  const options=await fixture(t);let state;
+  const result=await decideTool(event('Bash',{command:"rg -n 'PRIVATE_PATTERN' '/private/project/file' 2>&1 | head -c 4000"}),{
+    ...options,decide:async value=>{state=value;return answer();}
+  });
+  assert.equal(result.disposition,'native');assert.equal(result.hookOutput,null);
+  assert.equal(state.arguments.command_form,'literal_chain');
+  assert.deepEqual(state.arguments.commands,[{program:'rg',flags:['-n'],stderr_merged:true},{program:'head',flags:['-c'],stderr_merged:false}]);
+  assert.deepEqual(state.arguments.links,['|']);
+  assert.equal(state.arguments.body_withheld,true);
+  assert.ok(!JSON.stringify(state).includes('PRIVATE_PATTERN'));
+  assert.ok(!JSON.stringify(state).includes('/private/project/file'));
+});
+
+test('literal batches retain command ordering and do not grant permission',async t=>{
+  const options=await fixture(t);let state;
+  const result=await decideTool(event('exec_command',{cmd:'git status --short 2>&1 | head -c 4000\nls src 2>&1 | tail -c 4000'}),{
+    ...options,decide:async value=>{state=value;return answer('unknown',1);}
+  });
+  assert.deepEqual(state.arguments.commands.map(row=>row.program),['git','head','ls','tail']);
+  assert.equal(state.arguments.commands[0].subcommand,'status');
+  assert.deepEqual(state.arguments.links,['|','\n','|']);
+  assert.equal(result.choice,'unknown');assert.equal(result.uncertain,true);assert.equal(result.hookOutput,null);
+});
+
+test('scripts, substitutions, oversized chains and unsupported redirections stay withheld',async t=>{
+  const options=await fixture(t);
+  const commands=['node -e "PRIVATE_SCRIPT" | head -c 4000','env python3 private.py | head -c 4000','cat $(secret) | head -c 4000',
+    'cat input > output','cat x | xargs rm',Array(9).fill('pwd').join('\n'),'rg '+ 'a'.repeat(4000)];
+  for(const command of commands) {
+    let state;
+    await decideTool(event('Bash',{command}),{...options,decide:async value=>{state=value;return answer('unknown');}});
+    assert.equal(state.arguments.command_form,'complex_or_unavailable',command.slice(0,40));
+    assert.equal(state.arguments.commands,undefined);assert.equal(state.arguments.program,undefined);
+  }
+});
+
+test('pipeline flags expose names only and redact credentials',async t=>{
+  const options=await fixture(t);let state;
+  await decideTool(event('Bash',{command:"curl --header 'Authorization: Bearer PRIVATE_TOKEN' --data='PRIVATE_BODY' https://private.example/path | head -c 4000"}),{
+    ...options,decide:async value=>{state=value;return answer('external-side-effect');}
+  });
+  assert.deepEqual(state.arguments.commands[0].flags,['--header','--data']);
+  const json=JSON.stringify(state);
+  for(const withheld of ['PRIVATE_TOKEN','PRIVATE_BODY','Authorization','private.example'])assert.ok(!json.includes(withheld));
+  assert.ok(Buffer.byteLength(json)<=4000);
 });
 
 test('cache expires after 120 seconds and is separated by turn',async t => {
@@ -78,6 +126,57 @@ test('provider failure is denied and cached; recovery is a caller-controlled exc
   const records=(await readFile(path.join(options.stateDir,'tool-decisions.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
   assert.deepEqual(records.map(record=>record.disposition),['deny','recovery']);
   assert.ok(records.every(record=>record.tool_name==='mcp__service__write'));
+});
+
+test('opt-in recovery records policy without a Jev request, cache lookup, or approval',async t => {
+  const options=await fixture(t);let calls=0;
+  const input=event('Bash',{command:'/registered/jev-judge --file /synthetic/input --question question'});
+  const configured={...options,recovery:true,skipRecoveryDecisions:true,decide:async()=>{calls++;return answer();}};
+  const first=await decideTool(input,configured);
+  assert.match(first.fingerprint,/^[a-f0-9]{64}$/);
+  assert.deepEqual(first,{covered:false,source:'policy',choice:'unknown',confidence:0,completed:false,uncertain:true,
+    disposition:'recovery',fingerprint:first.fingerprint,hookOutput:null,reason:'registered_or_readonly'});
+  assert.deepEqual(await readdir(options.stateDir),['tool-decisions.jsonl']);
+  const cachePath=path.join(options.stateDir,`${first.fingerprint}.json`);
+  await writeFile(cachePath,'invalid cache must not be read',{mode:0o600});
+  const second=await decideTool(input,configured);
+  assert.deepEqual(second,first);assert.equal(calls,0);
+  assert.equal(await readFile(cachePath,'utf8'),'invalid cache must not be read');
+  const records=(await readFile(path.join(options.stateDir,'tool-decisions.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
+  assert.equal(records.length,2);
+  for(const record of records){
+    assert.equal(record.source,'policy');assert.equal(record.completed,false);assert.equal(record.uncertain,true);
+    assert.equal(record.disposition,'recovery');assert.equal(record.reason,'registered_or_readonly');
+    assert.equal(record.fingerprint,first.fingerprint);
+  }
+  assert.ok(!JSON.stringify({first,second,records}).includes('"permissionDecision":"allow"'));
+});
+
+test('recovery fast path requires both explicit opt-in and a true recovery decision',async t => {
+  const options=await fixture(t);let calls=0;
+  for(const [index,flags] of [{recovery:true},{recovery:true,skipRecoveryDecisions:false},
+    {recovery:false,skipRecoveryDecisions:true},{recovery:true,skipRecoveryDecisions:'true'}].entries()) {
+    const before=calls;
+    const result=await decideTool(event('Bash',{command:'/bin/pwd',case:index}),{...options,...flags,
+      decide:async(_state,_instructions,_criteria,requestOptions)=>{
+        calls++;assert.equal(requestOptions.diagnose,false);return answer();
+      }});
+    assert.equal(calls,before+1);assert.equal(result.source,'jev');assert.equal(result.completed,true);
+    assert.equal(result.hookOutput,null);assert.equal(result.reason,undefined);
+  }
+});
+
+test('recovery fast path does not bypass active-event or bounded-input validation',async t => {
+  const options=await fixture(t);let calls=0;
+  const configured={...options,recovery:true,skipRecoveryDecisions:true,decide:async()=>{calls++;return answer();}};
+  const inactive=await decideTool(event('Bash',{command:'/bin/pwd'}),{...configured,active:false});
+  const post=await decideTool(event('Bash',{command:'/bin/pwd'},{hook_event_name:'PostToolUse'}),configured);
+  for(const result of [inactive,post]){
+    assert.equal(result.source,'disabled');assert.equal(result.reason,undefined);assert.equal(result.fingerprint,null);
+  }
+  const oversized=await decideTool(event('Bash',{command:'x'.repeat(65537)}),configured);
+  assert.notEqual(oversized.source,'policy');assert.equal(oversized.reason,undefined);assert.equal(oversized.fingerprint,null);
+  assert.equal(calls,0);
 });
 
 test('invalid API responses cannot become completed classifications',async t => {

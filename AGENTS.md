@@ -1,10 +1,10 @@
-Inspect only files relevant to the request; use bounded searches before reading large ranges.
-Keep command output within 4000 bytes and retain full test logs outside model context when needed.
+Read only necessary active skills and relevant file ranges; locate source in the main session and delegate bounded tasks with fork_turns="none" by default.
+Read bulk records with code, optionally shortlist repeated semantic choices with Jev, and return IDs, paths, line ranges and brief evidence; directly read only ranges needed to edit or diagnose errors.
+Default lookups to 1000 output bytes, expanding to 4000 only when needed; read failures from a 4000-byte tail and preserve full logs and real exit codes privately.
 Preserve existing changes and host permission boundaries; do not silently enable integrations. Commit changes on a topic branch and open a PR; never push directly to main or merge without explicit user authorization.
-Use Jev only for finite decisions; keep facts, caching, execution, and safety checks in code.
-Use the decision hook for supported tool calls and registered Jev adapters for finite choices; never bypass a denial or turn UNKNOWN into an invented verdict.
-Retain UNKNOWN and low-confidence evidence; stop UI actions when state or authorization is unclear.
+Use Jev for repeated finite choices; keep facts, caching, arithmetic, execution and safety in code, and leave code writing and one-off analysis to the main agent.
+Retain UNKNOWN and low-confidence evidence; explain runtime causes locally and permit at most one inferred reason-only follow-up for explicit uncertainty; never recurse or turn a cause into permission; stop UI actions on unclear state or authorization.
 Never commit credentials, conversations, runtime state, generated binaries, or personal configuration.
 Document actual validation and limitations; do not infer token savings or platform compatibility.
-For visual finite choices use jev-visual; preserve pixel review as unperformed until a supported tool actually inspects pixels.
-Before verification, use jev-verify plan and run; with shell enforcement enabled use its registered absolute path, never bypass a denial, and keep Jev's judgment separate from actual exit codes.
+Use jev-visual for repeated visual candidate selection, excluding GPT image_gen; preserve pixel review as unperformed until a supported tool actually inspects pixels.
+Run relevant required checks once; repeat for changes, failures or explicit requirements. Use jev-verify for ambiguous optional rechecks, or when active enforcement requires it; keep judgment separate from exit codes.
