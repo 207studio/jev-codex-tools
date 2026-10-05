@@ -16,7 +16,7 @@ const answer = (choice = 'read-only',confidence = 0.99) => ({choice,confidence})
 test('MCP, edit, and agent calls each request an effects classification',async t => {
   const options = await fixture(t),states = [];
   for (const item of [event('mcp__notes__update',{page_id:'page-one',body:'PRIVATE_BODY'}),event('apply_patch','*** Begin Patch\n*** Update File: src/main.mjs\n@@\n+PRIVATE_PATCH_BODY\n*** End Patch'),event('spawn_agent',{message:'PRIVATE_AGENT_PROMPT'})]) {
-    const result = await decideTool(item,{...options,decide:async(state,_instructions,_criteria,requestOptions) => {states.push(state);assert.deepEqual(requestOptions,{timeout:2500,retries:0});return answer('reversible');}});
+    const result = await decideTool(item,{...options,decide:async(state,_instructions,_criteria,requestOptions) => {states.push(state);assert.deepEqual(requestOptions,{timeout:2500,retries:0,diagnose:false});return answer('reversible');}});
     assert.equal(result.covered,true);assert.equal(result.completed,true);assert.equal(result.disposition,'native');
   }
   assert.equal(states.length,3);
@@ -126,6 +126,57 @@ test('provider failure is denied and cached; recovery is a caller-controlled exc
   const records=(await readFile(path.join(options.stateDir,'tool-decisions.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
   assert.deepEqual(records.map(record=>record.disposition),['deny','recovery']);
   assert.ok(records.every(record=>record.tool_name==='mcp__service__write'));
+});
+
+test('opt-in recovery records policy without a Jev request, cache lookup, or approval',async t => {
+  const options=await fixture(t);let calls=0;
+  const input=event('Bash',{command:'/registered/jev-judge --file /synthetic/input --question question'});
+  const configured={...options,recovery:true,skipRecoveryDecisions:true,decide:async()=>{calls++;return answer();}};
+  const first=await decideTool(input,configured);
+  assert.match(first.fingerprint,/^[a-f0-9]{64}$/);
+  assert.deepEqual(first,{covered:false,source:'policy',choice:'unknown',confidence:0,completed:false,uncertain:true,
+    disposition:'recovery',fingerprint:first.fingerprint,hookOutput:null,reason:'registered_or_readonly'});
+  assert.deepEqual(await readdir(options.stateDir),['tool-decisions.jsonl']);
+  const cachePath=path.join(options.stateDir,`${first.fingerprint}.json`);
+  await writeFile(cachePath,'invalid cache must not be read',{mode:0o600});
+  const second=await decideTool(input,configured);
+  assert.deepEqual(second,first);assert.equal(calls,0);
+  assert.equal(await readFile(cachePath,'utf8'),'invalid cache must not be read');
+  const records=(await readFile(path.join(options.stateDir,'tool-decisions.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
+  assert.equal(records.length,2);
+  for(const record of records){
+    assert.equal(record.source,'policy');assert.equal(record.completed,false);assert.equal(record.uncertain,true);
+    assert.equal(record.disposition,'recovery');assert.equal(record.reason,'registered_or_readonly');
+    assert.equal(record.fingerprint,first.fingerprint);
+  }
+  assert.ok(!JSON.stringify({first,second,records}).includes('"permissionDecision":"allow"'));
+});
+
+test('recovery fast path requires both explicit opt-in and a true recovery decision',async t => {
+  const options=await fixture(t);let calls=0;
+  for(const [index,flags] of [{recovery:true},{recovery:true,skipRecoveryDecisions:false},
+    {recovery:false,skipRecoveryDecisions:true},{recovery:true,skipRecoveryDecisions:'true'}].entries()) {
+    const before=calls;
+    const result=await decideTool(event('Bash',{command:'/bin/pwd',case:index}),{...options,...flags,
+      decide:async(_state,_instructions,_criteria,requestOptions)=>{
+        calls++;assert.equal(requestOptions.diagnose,false);return answer();
+      }});
+    assert.equal(calls,before+1);assert.equal(result.source,'jev');assert.equal(result.completed,true);
+    assert.equal(result.hookOutput,null);assert.equal(result.reason,undefined);
+  }
+});
+
+test('recovery fast path does not bypass active-event or bounded-input validation',async t => {
+  const options=await fixture(t);let calls=0;
+  const configured={...options,recovery:true,skipRecoveryDecisions:true,decide:async()=>{calls++;return answer();}};
+  const inactive=await decideTool(event('Bash',{command:'/bin/pwd'}),{...configured,active:false});
+  const post=await decideTool(event('Bash',{command:'/bin/pwd'},{hook_event_name:'PostToolUse'}),configured);
+  for(const result of [inactive,post]){
+    assert.equal(result.source,'disabled');assert.equal(result.reason,undefined);assert.equal(result.fingerprint,null);
+  }
+  const oversized=await decideTool(event('Bash',{command:'x'.repeat(65537)}),configured);
+  assert.notEqual(oversized.source,'policy');assert.equal(oversized.reason,undefined);assert.equal(oversized.fingerprint,null);
+  assert.equal(calls,0);
 });
 
 test('invalid API responses cannot become completed classifications',async t => {

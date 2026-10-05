@@ -2,7 +2,8 @@ import {mkdir,appendFile} from 'node:fs/promises';
 import {stateHome} from './paths.mjs';
 import path from 'node:path';
 import {enabled} from './features.mjs';
-import {diagnoseUnknown} from './unknown-diagnosis.mjs';
+import {diagnoseUnknownReason} from './unknown-diagnosis.mjs';
+import {formatUnknownReason} from './unknown-reason.mjs';
 
 async function recordMetrics(start,bodyBytes,data,outcome) {
   if(!enabled('decision_metrics'))return;
@@ -15,6 +16,7 @@ async function recordMetrics(start,bodyBytes,data,outcome) {
 }
 
 async function report(info,onDiagnostic) {
+  if(info.status!=='decided'&&!info.unknown_reason) info.unknown_reason=formatUnknownReason(info);
   try{onDiagnostic?.(info);}catch{}
   if(info.status==='decided'||!enabled('unknown_diagnostics'))return;
   try {
@@ -61,19 +63,22 @@ async function request(state,questions,{timeout,key,fetchImpl,maxBytes,retries=0
 }
 
 function uncertainty(answer,minimum) {
-  if(['UNKNOWN','INSUFFICIENT'].includes(answer.choice))return 'explicit_unknown';
-  return answer.confidence<minimum?'low_confidence':'decided';
+  if(answer.confidence<minimum)return 'low_confidence';
+  return ['UNKNOWN','INSUFFICIENT'].includes(String(answer.choice).trim().toUpperCase())?'explicit_unknown':'decided';
 }
 
 async function enrich(state,instructions,criteria,answer,info,options,started) {
-  if(info.status!=='decided'&&options.diagnose!==false&&enabled('unknown_diagnostics')) {
+  // Low confidence and observed runtime failures are explained locally.  Only
+  // an explicit uncertainty may consume one non-recursive reason request.
+  if(info.status==='explicit_unknown'&&options.diagnose!==false&&enabled('unknown_diagnostics')) {
     const remaining=options.timeout-(Date.now()-started);
     if(remaining<50)info.diagnosis={reason:'BUDGET_EXHAUSTED',confidence:0,request_attempted:false};
     else try {
-      info.diagnosis=await diagnoseUnknown({state,instructions,criteria,answer},{timeout:Math.min(1500,remaining),
+      info.diagnosis=await diagnoseUnknownReason({state,instructions,criteria,answer},{timeout:Math.min(1500,remaining),
         decideMany:(diagnosticState,questions,limits)=>chooseMany(diagnosticState,questions,{...limits,key:options.key,fetchImpl:options.fetchImpl,diagnose:false})});
     }catch{info.diagnosis={reason:'UNKNOWN',confidence:0,request_attempted:false};}
   }
+  if(info.status!=='decided')info.unknown_reason=formatUnknownReason(info);
   await report(info,options.onDiagnostic);
   return info.status==='decided'?answer:{...answer,diagnostic:info};
 }

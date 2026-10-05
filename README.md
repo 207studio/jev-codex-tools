@@ -4,9 +4,19 @@ Experimental, opt-in tools from **207 Studio** that use TypeSafe Jev for bounded
 
 The goal is to avoid repeatedly sending unnecessary logs, conversation excerpts, and UI observations to a general coding model. **This repository does not yet establish a general token-saving percentage.** It does not replace Codex, native conversation compaction, or the host's approval system.
 
+A [single-pair synthetic comparison](docs/TOKEN_COMPARISON_20260922.md) recorded less Codex input with bulk offload, but one additional abstention; it does not establish accuracy parity. [Input policy](docs/INPUT_POLICY.md) keeps bulk raw text outside the model and preserves necessary evidence. [UNKNOWN explanations](docs/UNKNOWN_DIAGNOSTICS.md) retain the original verdict and label inferred causes.
+
 Independent community project. Not an official OpenAI or TypeSafe product. Jev remains an external service with its own terms and pricing.
 
+## Measured findings
+
+The newer [workflow routing measurement](docs/WORKFLOW_MEASUREMENT.md) found **1.4% lower Astra input and 41.1% lower Astra output**, while unweighted token counts across Astra and Jev **increased 3.9%**. This is six synthetic routing cases repeated twice, not end-to-end coding or billing evidence; code-only results include UNKNOWN. Fixtures, all runs and limitations are published alongside the report.
+
+[한국어 조사 결과](docs/TOKEN_SAVINGS_FINDINGS.md) brings together the bounded Jev pilot, native input budgets, exact fixtures and limitations. Input-token usage and rendered text bytes are reported separately.
+
 ## What's included
+
+- [Bounded workflow advice](docs/WORKFLOW_POLICY.md): avoid extra Jev decisions for known work, ask once for ambiguous mixed tasks, and reuse an unchanged plan. No additional per-tool hook.
 
 | Tool | Purpose | Boundary |
 |---|---|---|
@@ -67,6 +77,10 @@ The optional macOS helper is built explicitly with `npm run build:macos` using A
 For scoped cross-file consistency review, use [the contradiction index](docs/CONTRADICTIONS.md): `jev-conflicts --spec examples/contradictions.json`. It locates explicit literal-symbol occurrences, classifies bounded pairs through Jev, preserves UNKNOWN, and pages exact source locations with freshness checks. The `code_contradictions` flag is opt-in. A contradiction label is a review candidate, not a proven defect or permission to edit code.
 
 For existing TypeSafe skills, optional MCP access and Ultrafast-style operation/target selection on Aside, see [Jev integrations](docs/JEV_INTEGRATIONS.md). The `browser_fanout` feature is opt-in and reuses the current Aside browser.
+
+For five or more bounded semantic judgments with record text kept outside agent context, see [Jev Mode for Codex](docs/JEV_MODE.md). The adapted skill reuses an existing shared CLI; its hook example is inactive and requires user approval.
+
+To reduce redundant per-step judgments, mandatory wrapper calls and repeated context injection, see [selective Jev use](docs/SELECTIVE_USAGE.md). Its opt-in profile retains native policy and the non-exempt tool classification path.
 
 To distinguish provider failures from missing evidence or missing options, see [UNKNOWN diagnostics](docs/UNKNOWN_DIAGNOSTICS.md). The optional follow-up preserves the original verdict and proposes only exact source labels; it cannot create execution permission.
 

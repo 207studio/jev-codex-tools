@@ -28,8 +28,8 @@ function mockFetch(answer = primaryAnswer(), reason = 'MISSING_OPTION') {
     if (calls.length === 1) return ok({decision:answer});
     assert.equal(calls.length, 2, 'diagnosis must never recurse or retry');
     assert.equal(body.questions.reason.type, 'choice');
-    assert.equal(body.questions.candidate.type, 'choice');
-    const selections = {reason, candidate:Object.hasOwn(body.questions.candidate.criteria, 'C1') ? 'C1' : 'NONE'};
+    assert.deepEqual(Object.keys(body.questions), ['reason']);
+    const selections = {reason};
     return ok(Object.fromEntries(Object.entries(body.questions).map(([id, question]) => [id, {
       type:'choice', choice:selections[id], confidence:0.9,
       probabilities:Object.fromEntries(Object.keys(question.criteria).map(label => [label, label === selections[id] ? 1 : 0])),
@@ -47,7 +47,10 @@ test('valid UNKNOWN keeps the original decision and request contract while addin
   assert.equal(output.reason, 'EXPLICIT_UNKNOWN');
   assert.equal(output.apiCalls, 2);
   assert.equal(output.diagnosis.reason, 'MISSING_OPTION');
-  assert.deepEqual(output.diagnosis.proposed_option, {value:'PAUSE', path:'$["evidence"]'});
+  assert.equal(output.diagnosis.proposed_option, undefined);
+  assert.equal(output.unknown_reason.inferred, true);
+  assert.equal(output.unknown_reason.source, 'jev');
+  assert.match(output.unknown_reason.display, /추정/);
   assert.equal(mock.calls[0].questions.decision.instructions.question, options.question);
   assert.equal(typeof mock.calls[0].questions.decision.instructions, 'object');
   assert.equal(mock.calls[1].state.original_instructions, options.question);
@@ -61,9 +64,10 @@ test('low confidence YES remains UNKNOWN and preserves observed choice and confi
   assert.equal(output.observed_choice, 'YES');
   assert.equal(output.observed_confidence, 0.65);
   assert.equal(output.reason, 'LOW_CONFIDENCE');
-  assert.equal(output.diagnosis.reason, 'LOW_CONFIDENCE');
-  assert.equal(output.diagnosis.proposed_option, undefined);
-  assert.equal(output.apiCalls, 2);
+  assert.equal(output.diagnosis, null);
+  assert.equal(output.unknown_reason.code, 'LOW_CONFIDENCE');
+  assert.equal(output.unknown_reason.inferred, false);
+  assert.equal(output.apiCalls, 1);
 });
 
 test('cached UNKNOWN makes zero calls and stores diagnosis without literal value or path', async t => {
@@ -76,7 +80,8 @@ test('cached UNKNOWN makes zero calls and stores diagnosis without literal value
   assert.equal(second.decision, 'UNKNOWN');
   assert.equal(second.observed_choice, first.observed_choice);
   assert.equal(second.observed_confidence, first.observed_confidence);
-  assert.deepEqual(second.diagnosis, {reason:'MISSING_OPTION', confidence:0.9, request_attempted:true, proposed_option_present:true});
+  assert.deepEqual(second.diagnosis, {reason:'MISSING_OPTION', confidence:0.9, request_attempted:true, proposed_option_present:false});
+  assert.deepEqual(second.unknown_reason, first.unknown_reason);
   const [name] = await readdir(options.cacheDir);
   const raw = await readFile(path.join(options.cacheDir, name), 'utf8');
   assert.equal(raw.includes('PAUSE'), false);
@@ -88,7 +93,9 @@ test('disabled diagnostics preserves default one-word stdout and does not add a 
   const options = await fixture(t), mock = mockFetch();
   const output = await runCli(['--file', options.file, '--question', options.question, '--no-cache'],
     {...options, fetchImpl:mock.fetchImpl, isEnabled:disabledDiagnostics});
-  assert.deepEqual(output, {stdout:'UNKNOWN', stderr:'', exitCode:3});
+  assert.equal(output.stdout, 'UNKNOWN');
+  assert.equal(output.exitCode, 3);
+  assert.match(output.stderr, /^UNKNOWN · 원인/);
   assert.equal(mock.calls.length, 1);
 });
 
@@ -124,13 +131,17 @@ test('--details error output includes only fixed codes and API count', async t =
   for (const [fetchImpl, reason] of [
     [async () => ({ok:false, status:503, json:async () => { throw new Error('private response'); }}), 'HTTP_503'],
     [async () => { throw new Error('Bearer private-key user@example.com'); }, 'REQUEST_FAILED'],
+    [async () => { throw Object.assign(new Error('private timeout detail'), {name:'TimeoutError'}); }, 'REQUEST_TIMEOUT'],
     [async () => ({ok:false, status:'private-key'}), 'HTTP_ERROR'],
     [async () => ok({decision:{choice:'UNKNOWN'}}), 'INVALID_RESPONSE'],
   ]) {
     const output = await runCli(['--file', options.file, '--question', options.question, '--no-cache', '--details'],
       {...options, fetchImpl});
-    assert.deepEqual(JSON.parse(output.stdout), {decision:'UNKNOWN', source:'error', apiCalls:1,
+    const {unknown_reason, ...fields} = JSON.parse(output.stdout);
+    assert.deepEqual(fields, {decision:'UNKNOWN', source:'error', apiCalls:1,
       observed_choice:null, observed_confidence:null, reason, diagnosis:null});
+    assert.equal(unknown_reason.source, 'runtime');
+    assert.equal(unknown_reason.inferred, false);
     assert.equal(output.stderr, reason);
     assert.equal(output.exitCode, 2);
     assert.equal(output.stdout.includes('private'), false);
@@ -155,4 +166,20 @@ test('unsafe original evidence withholds only diagnostics and retains the primar
   assert.equal(output.observed_choice, 'UNKNOWN');
   assert.equal(output.apiCalls, 1);
   assert.deepEqual(output.diagnosis, {reason:'INPUT_WITHHELD', confidence:0, request_attempted:false});
+});
+
+test('a low-confidence explicit UNKNOWN never adds a semantic request', async t => {
+  const options = await fixture(t), mock = mockFetch(primaryAnswer('UNKNOWN', 0.5));
+  const output = await judge({...options, noCache:true, fetchImpl:mock.fetchImpl});
+  assert.equal(mock.calls.length, 1);
+  assert.equal(output.unknown_reason.code, 'LOW_CONFIDENCE');
+});
+
+test('plain error stdout stays parseable while stderr gives a safe Korean action', async t => {
+  const options = await fixture(t);
+  const output = await runCli(['--file', options.file, '--question', options.question, '--no-cache'],
+    {...options, key:'', fetchImpl:async () => assert.fail('must not call without a key')});
+  assert.equal(output.stdout, 'UNKNOWN');
+  assert.equal(output.exitCode, 2);
+  assert.match(output.stderr, /^MISSING_KEY: UNKNOWN · 인증 정보 없음/);
 });
