@@ -1,0 +1,11 @@
+{
+  "conditions": {
+    "off": {"model":"gpt-6-astra","effort":"ultra","cases":24,"correct":24,"unknown":8,"exit_code":0,"wall_seconds":71.21,"input_tokens":81426,"cached_input_tokens":59392,"uncached_input_tokens":22034,"output_tokens":927},
+    "on": {"model":"gpt-6-astra","effort":"ultra","cases":24,"correct":23,"unknown":9,"exit_code":0,"wall_seconds":47.55,"input_tokens":58221,"cached_input_tokens":38272,"uncached_input_tokens":19949,"output_tokens":166,"jev":{"items":24,"ok":24,"failed":0,"input_tokens":11863,"output_tokens":1444,"text_tokens":681}}
+  },
+  "reduction_percent":{"input_tokens":28.5,"uncached_input_tokens":9.5,"output_tokens":82.1,"wall_seconds":33.2},
+  "pairs":1,
+  "caching_controlled":false,
+  "scope":"one bounded synthetic classification task; not an environment-wide on/off comparison",
+  "public_trace_included":false
+}

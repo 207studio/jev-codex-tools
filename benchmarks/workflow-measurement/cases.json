@@ -1,0 +1,8 @@
+[
+  {"id":"lookup","kind":"lookup","scope_known":true,"role":"procedure","semantic_items":0,"independent_units":1,"parallel_benefit":false,"goal":"Read the test command from a known package manifest."},
+  {"id":"edit","kind":"edit","scope_known":true,"role":"implementation","semantic_items":0,"independent_units":1,"parallel_benefit":false,"goal":"Change one known configuration value and run its required check."},
+  {"id":"debug","kind":"debug","scope_known":false,"role":"implementation","semantic_items":0,"independent_units":1,"parallel_benefit":false,"goal":"Locate one reproducible error, fix it, then run its related test."},
+  {"id":"batch","kind":"bulk","scope_known":true,"role":"procedure","semantic_items":8,"independent_units":1,"parallel_benefit":false,"goal":"Classify eight records into a fixed label set; code reads the records."},
+  {"id":"parallel","kind":"mixed","scope_known":true,"role":"mixed","semantic_items":0,"independent_units":2,"parallel_benefit":true,"goal":"Two independent workers each follow a complete fixed checklist and compare existing numeric outputs. No implementation, design, or unresolved constraints are involved."},
+  {"id":"sequential","kind":"mixed","scope_known":true,"role":"mixed","semantic_items":0,"independent_units":1,"parallel_benefit":false,"goal":"Edit one known setting and inspect its required test result. Each step depends on the previous step, so the work stays sequential in the main session."}
+]
